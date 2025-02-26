@@ -41,7 +41,7 @@ def update_ema(ema_model, model, decay=0.9999):
     model_params = OrderedDict(model.named_parameters())
 
     for name, param in model_params.items():
-        # TODO: Consider applying only to params that require_grad to avoid small numerical changes of pos_embed
+        # If you only want to update params that require_grad, you could do that here.
         ema_params[name].mul_(decay).add_(param.data, alpha=1 - decay)
 
 def requires_grad(model, flag=True):
@@ -118,10 +118,10 @@ def main(args):
 
     # Setup an experiment folder:
     if rank == 0:
-        os.makedirs(args.results_dir, exist_ok=True) 
+        os.makedirs(args.results_dir, exist_ok=True)
         experiment_index = len(glob(f"{args.results_dir}/*"))
-        model_string_name = args.model.replace("/", "-")  
-        model_string_name = args.dataset+"-" + model_string_name + "-crop" if args.crop else args.dataset+"-" + model_string_name 
+        model_string_name = args.model.replace("/", "-")
+        model_string_name = args.dataset + "-" + model_string_name + "-crop" if args.crop else args.dataset + "-" + model_string_name
         model_string_name = model_string_name + "-withmask" if args.add_mask else model_string_name
         experiment_dir = f"{args.results_dir}/{experiment_index:03d}-{model_string_name}"  # Create an experiment folder
         checkpoint_dir = f"{experiment_dir}/checkpoints"  # Stores saved model checkpoints
@@ -132,31 +132,81 @@ def main(args):
         logger = create_logger(None)
 
     # Create model:
-    assert args.image_size % 3 == 0, "Image size should be Multiples of 3"
+    assert args.image_size % 3 == 0, "Image size should be multiples of 3"
     if args.dataset == 'imagenet':
-        assert args.image_size == 288 or args.crop, "Set imagesize to 192 if run experiment on imagenet with gap"
+        assert args.image_size == 288 or args.crop, "Use --image-size=192 if you run imagenet with gap"
     model = DiT_models[args.model](
         input_size=args.image_size
     )
 
-    if args.ckpt!= "":
-        ckpt_path = args.ckpt
-        print("Load model from ",ckpt_path)
-        model_dict = model.state_dict()
-        state_dict = torch.load(ckpt_path)
-        pretrained_dict = {k: v for k, v in state_dict.items() if k in model_dict}
-        model.load_state_dict(pretrained_dict, strict=False)
+    # ### ADDED: We'll track our training steps here if we can load from checkpoint
+    train_steps = 0
 
-    # Note that parameter initialization is done within the DiT constructor
-    ema = deepcopy(model).to(device)  # Create an EMA of the model for use after training
+    ########################################
+    # FIRST, wrap the model in DDP or load?
+    ########################################
+    # Actually, let's do the approach you had: we define the model, then wrap it in DDP:
+    # (So "model.module" is valid below).
+    # Move to device and wrap in DDP
+    model.to(device)
+    model = DDP(model, device_ids=[rank])
+
+    # Create the EMA model from the current model's weights:
+    # Note: because we only need its parameters, we pass model.module to keep the "raw" underlying network.
+    ema = deepcopy(model.module).to(device)
     requires_grad(ema, False)
-    model = DDP(model.to(device), device_ids=[rank])
+
+    # ### CHANGED: If a checkpoint is provided, load it fully (model, ema, opt, train_steps).
+    if args.ckpt != "":
+        ckpt_path = args.ckpt
+        print(f"Rank={rank}: Loading checkpoint from {ckpt_path}")
+
+        # For PyTorch 2.6, ensure weights_only=False so we can load non-tensor objects
+        checkpoint = torch.load(ckpt_path, weights_only=False)
+
+        if "model" in checkpoint:
+            model.module.load_state_dict(checkpoint["model"], strict=False)
+            print(f"Rank={rank}: Loaded 'model' state_dict from checkpoint.")
+        else:
+            print(f"Rank={rank}: WARNING: 'model' not found in checkpoint.")
+
+        if "ema" in checkpoint:
+            ema.load_state_dict(checkpoint["ema"])
+            print(f"Rank={rank}: Loaded 'ema' state_dict from checkpoint.")
+        else:
+            print(f"Rank={rank}: WARNING: 'ema' not found in checkpoint.")
+
+        # We'll create the optimizer below, so let's also restore if we have it:
+        # (But only rank=0 logs messages to avoid confusion)
+        # We'll store "train_steps" if present.
+        if "opt" in checkpoint:
+            opt_state = checkpoint["opt"]
+        else:
+            opt_state = None
+            print(f"Rank={rank}: WARNING: 'opt' not found in checkpoint.")
+
+        # Attempt to load "train_steps" if present
+        if "train_steps" in checkpoint:
+            train_steps = checkpoint["train_steps"]
+            if rank == 0:
+                print(f"Resuming from step={train_steps} for rank0.")
+        else:
+            if rank == 0:
+                print("No 'train_steps' in checkpoint, so we'll start from 0.")
+
     diffusion = create_diffusion(timestep_respacing="")  # default: 1000 steps, linear noise schedule
-    logger.info(f"DiT Parameters: {sum(p.numel() for p in model.parameters()):,}")
+    if rank == 0:
+        logger.info(f"DiT Parameters: {sum(p.numel() for p in model.parameters()):,}")
 
-    # Setup optimizer (we used default Adam betas=(0.9, 0.999) and a constant learning rate of 1e-4 in our paper):
+    # Setup optimizer:
     opt = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=0)
+    # ### If we had an optimizer state in the checkpoint, load it now
+    if args.ckpt != "" and opt_state is not None:
+        opt.load_state_dict(opt_state)
+        if rank == 0:
+            print("Optimizer state loaded from checkpoint.")
 
+    # Setup transforms
     transform = transforms.Compose([
         transforms.Lambda(lambda pil_image: center_crop_arr(pil_image, 288)),
         transforms.RandomHorizontalFlip(),
@@ -166,11 +216,10 @@ def main(args):
 
     # Setup data:
     if args.dataset == "met":
-        # MET dataloader give out croped and stitched back images
-        dataset = MET(args.data_path,'train')
+        dataset = MET(args.data_path, 'train')
     elif args.dataset == "imagenet":
         dataset = ImageFolder(args.data_path, transform=transform)
-  
+
     sampler = DistributedSampler(
         dataset,
         num_replicas=dist.get_world_size(),
@@ -187,73 +236,92 @@ def main(args):
         pin_memory=True,
         drop_last=True
     )
-    logger.info(f"Dataset contains {len(dataset):,} images")
+    if rank == 0:
+        logger.info(f"Dataset contains {len(dataset):,} images")
 
     # Prepare models for training:
-    update_ema(ema, model.module, decay=0)  # Ensure EMA is initialized with synced weights
+    # If we're continuing from a checkpoint, we've already loaded model & ema states above.
     model.train()  # important! This enables embedding dropout for classifier-free guidance
-    ema.eval()  # EMA model should always be in eval mode
+    ema.eval()     # EMA model should always be in eval mode
 
-    # Variables for monitoring/logging purposes:
-    train_steps = 0
     log_steps = 0
     running_loss = 0
     start_time = time()
 
-    logger.info(f"Training for {args.epochs} epochs...")
+    if rank == 0:
+        logger.info(f"Training for {args.epochs} epochs...")
+
     for epoch in range(args.epochs):
         sampler.set_epoch(epoch)
-        logger.info(f"Beginning epoch {epoch}...")
+        if rank == 0:
+            logger.info(f"Beginning epoch {epoch}...")
+
         for x in loader:
             if args.dataset == 'imagenet':
-                x, _ = x
+                x, _ = x  # discard class labels
             x = x.to(device)
+
             if args.dataset == 'imagenet' and args.crop:
-                centercrop = transforms.CenterCrop((64,64))
-                patchs = rearrange(x, 'b c (p1 h1) (p2 w1)-> b c (p1 p2) h1 w1',p1=3,p2=3,h1=96,w1=96)
+                centercrop = transforms.CenterCrop((64, 64))
+                patchs = rearrange(x, 'b c (p1 h1) (p2 w1)-> b c (p1 p2) h1 w1', p1=3, p2=3, h1=96, w1=96)
                 patchs = centercrop(patchs)
-                x = rearrange(patchs, 'b c (p1 p2) h1 w1-> b c (p1 h1) (p2 w1)',p1=3,p2=3,h1=64,w1=64)
+                x = rearrange(patchs, 'b c (p1 p2) h1 w1-> b c (p1 h1) (p2 w1)', p1=3, p2=3, h1=64, w1=64)
 
             # Set up initial positional embedding
             time_emb = torch.tensor(get_2d_sincos_pos_embed(8, 3)).unsqueeze(0).float().to(device)
 
             t = torch.randint(0, diffusion.num_timesteps, (x.shape[0],), device=device)
             model_kwargs = None
-            loss_dict = diffusion.training_losses(model, x, t, time_emb, model_kwargs, \
-                block_size=args.image_size//3, patch_size=16, add_mask=args.add_mask)
+
+            loss_dict = diffusion.training_losses(
+                model,
+                x,
+                t,
+                time_emb,
+                model_kwargs,
+                block_size=args.image_size // 3,
+                patch_size=16,
+                add_mask=args.add_mask
+            )
             loss = loss_dict["loss"].mean()
             opt.zero_grad()
             loss.backward()
             opt.step()
             update_ema(ema, model.module)
 
-            # Log loss values:
             running_loss += loss.item()
             log_steps += 1
             train_steps += 1
+
+            # Log every N steps
             if train_steps % args.log_every == 0:
-                # Measure training speed:
                 torch.cuda.synchronize()
                 end_time = time()
                 steps_per_sec = log_steps / (end_time - start_time)
-                # Reduce loss history over all processes:
+
+                # average loss across ranks
                 avg_loss = torch.tensor(running_loss / log_steps, device=device)
                 dist.all_reduce(avg_loss, op=dist.ReduceOp.SUM)
                 avg_loss = avg_loss.item() / dist.get_world_size()
-                logger.info(f"(step={train_steps:07d}) Train Loss: {avg_loss:.4f}, Train Steps/Sec: {steps_per_sec:.2f}")
-                # Reset monitoring variables:
+
+                if rank == 0:
+                    logger.info(f"(step={train_steps:07d}) Train Loss: {avg_loss:.4f}, "
+                                f"Train Steps/Sec: {steps_per_sec:.2f}")
+
+                # reset counters
                 running_loss = 0
                 log_steps = 0
                 start_time = time()
 
-            # Save JPDVT checkpoint:
+            # Save JPDVT checkpoint
             if train_steps % args.ckpt_every == 0 and train_steps > 0:
                 if rank == 0:
                     checkpoint = {
                         "model": model.module.state_dict(),
                         "ema": ema.state_dict(),
                         "opt": opt.state_dict(),
-                        "args": args
+                        "args": args,
+                        "train_steps": train_steps  # ### ADDED: store the current step
                     }
                     checkpoint_path = f"{checkpoint_dir}/{train_steps:07d}.pt"
                     torch.save(checkpoint, checkpoint_path)
@@ -262,15 +330,17 @@ def main(args):
 
     model.eval()  # important! This disables randomized embedding dropout
 
-    logger.info("Done!")
+    if rank == 0:
+        logger.info("Done!")
     cleanup()
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--results-dir", type=str, default="results")
     parser.add_argument("--model", type=str, choices=list(DiT_models.keys()), default="JPDVT")
     parser.add_argument("--dataset", type=str, choices=["imagenet", "met"], default="imagenet")
-    parser.add_argument("--data-path", type=str,required=True)
+    parser.add_argument("--data-path", type=str, required=True)
     parser.add_argument("--crop", action='store_true', default=False)
     parser.add_argument("--add-mask", action='store_true', default=False)
     parser.add_argument("--image-size", type=int, choices=[192, 288], default=288)
@@ -279,7 +349,7 @@ if __name__ == "__main__":
     parser.add_argument("--global-seed", type=int, default=0)
     parser.add_argument("--num-workers", type=int, default=12)
     parser.add_argument("--log-every", type=int, default=100)
-    parser.add_argument("--ckpt-every", type=int, default=10_000)
+    parser.add_argument("--ckpt-every", type=int, default=10000)
     parser.add_argument("--ckpt", type=str, default='')
     args = parser.parse_args()
     main(args)
