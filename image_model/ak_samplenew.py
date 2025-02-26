@@ -31,7 +31,6 @@ def imshow_tensor(img_tensor, title=""):
     plt.axis("off")
     plt.show()
 
-
 def center_crop_arr(pil_image, image_size):
     """
     Center cropping implementation from ADM.
@@ -56,15 +55,12 @@ def main(args):
     # Setup PyTorch:
     torch.manual_seed(args.seed)
     torch.set_grad_enabled(False)
-    device =  "cuda"
+    device = "cuda"
     
-
     template = np.zeros((6,6))
-
     for i in range(6):
         for j in range(6):
             template[i,j] = 18 * i + j
-
     template = np.concatenate((template,template,template),axis=0)
     template = np.concatenate((template,template,template),axis=1)
 
@@ -78,7 +74,6 @@ def main(args):
     state_dict = torch.load(ckpt_path, weights_only=False)
     model_state_dict = state_dict['model']
     pretrained_dict = {k: v for k, v in model_state_dict.items() if k in model_dict}
-    #pint(pretrained_dict)
     model.load_state_dict(pretrained_dict, strict=False)
 
     print("Model keys:", list(model_dict.keys())[:10])
@@ -86,8 +81,7 @@ def main(args):
 
     transform = transforms.Compose([
        transforms.Lambda(lambda pil_image: center_crop_arr(pil_image, 192)),
-        #transforms.RandomHorizontalFlip(),
-        transforms.ToTensor(),
+       transforms.ToTensor(),
        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5], inplace=True)
     ])
 
@@ -117,15 +111,15 @@ def main(args):
     time_emb_noise = time_emb_noise.repeat(1,1,1)
     model_kwargs = None
 
-    # find the order with a greedy algorithm
+    # Greedy algorithm to find permutation order
     def find_permutation(distance_matrix):
-            sort_list = []
-            for m in range(distance_matrix.shape[1]):
-                order = distance_matrix[:,0].argmin()
-                sort_list.append(order)
-                distance_matrix = distance_matrix[:,1:]
-                distance_matrix[order,:] = 2024
-            return sort_list
+        sort_list = []
+        for m in range(distance_matrix.shape[1]):
+            order = distance_matrix[:,0].argmin()
+            sort_list.append(order)
+            distance_matrix = distance_matrix[:,1:]
+            distance_matrix[order,:] = 2024
+        return sort_list
 
     abs_results = []
     for x in loader:
@@ -136,61 +130,83 @@ def main(args):
         
         if args.dataset == 'imagenet' and args.crop:
             centercrop = transforms.CenterCrop((64,64))
-            patchs = rearrange(x, 'b c (p1 h1) (p2 w1)-> b c (p1 p2) h1 w1',p1=3,p2=3,h1=96,w1=96)
+            patchs = rearrange(x, 'b c (p1 h1) (p2 w1) -> b c (p1 p2) h1 w1', p1=3, p2=3, h1=96, w1=96)
             patchs = centercrop(patchs)
-            x = rearrange(patchs, 'b c (p1 p2) h1 w1-> b c (p1 h1) (p2 w1)',p1=3,p2=3,h1=64,w1=64)
-            
-
-      
-        # Generate the Puzzles
+            x = rearrange(patchs, 'b c (p1 p2) h1 w1 -> b c (p1 h1) (p2 w1)', p1=3, p2=3, h1=64, w1=64)
+        
+        # Generate the puzzles: split the image into 9 patches
         indices = np.random.permutation(9)
-        print(indices)
-        x = rearrange(x, 'b c (p1 h1) (p2 w1)-> b c (p1 p2) h1 w1',p1=3,p2=3,h1=args.image_size//3,w1=args.image_size//3)
+        print("Random permutation indices:", indices)
+        x = rearrange(x, 'b c (p1 h1) (p2 w1) -> b c (p1 p2) h1 w1', 
+                      p1=3, p2=3, h1=args.image_size//3, w1=args.image_size//3)
         
-        
-        patches = [x[0, :, i, :, :] for i in range(9)]
-        grid = torch.stack(patches)
-        grid_img = save_image(grid, "debug_patches_before.png", nrow=3, normalize=True)
+        # Save the patches before any permutation
+        patches_before = [x[0, :, i, :, :] for i in range(9)]
+        grid = torch.stack(patches_before)
+        save_image(grid, "debug_patches_before.png", nrow=3, normalize=True)
         plt.figure(figsize=(4, 4))
         plt.imshow(torchvision.utils.make_grid(grid, nrow=3, normalize=True).permute(1, 2, 0).cpu().numpy())
         plt.title("Patches Before Permutation")
         plt.axis("off")
         plt.show()
         
-        x = x[:,:,indices,:,:]
-        patches = [x[0, :, i, :, :] for i in range(9)]
-        grid = torch.stack(patches)
-        grid_img = save_image(grid, "debug_patches_after.png", nrow=3, normalize=True)
+        # Permute the patches
+        x = x[:, :, indices, :, :]
+        # Save scrambled patches for later visualization of the final puzzle
+        scrambled_patches = [x[0, :, i, :, :] for i in range(9)]
+        grid = torch.stack(scrambled_patches)
+        save_image(grid, "debug_patches_after.png", nrow=3, normalize=True)
         plt.figure(figsize=(4, 4))
         plt.imshow(torchvision.utils.make_grid(grid, nrow=3, normalize=True).permute(1, 2, 0).cpu().numpy())
         plt.title("Patches After Permutation")
         plt.axis("off")
         plt.show()
         
-        x = rearrange(x, ' b c (p1 p2) h1 w1->b c (p1 h1) (p2 w1)',p1=3,p2=3,h1=args.image_size//3,w1=args.image_size//3)
-    
+        # Reassemble the scrambled patches into the final scrambled image
+        x = rearrange(x, 'b c (p1 p2) h1 w1 -> b c (p1 h1) (p2 w1)', 
+                      p1=3, p2=3, h1=args.image_size//3, w1=args.image_size//3)
         imshow_tensor(x[0], title="Final Scrambled Image")
-        print(x.shape)
+        print("Scrambled image shape:", x.shape)
+        
+        # Generate samples using the diffusion process
         samples = diffusion.p_sample_loop(
-            model.forward, x, time_emb_noise.shape, time_emb_noise, clip_denoised=False, model_kwargs=model_kwargs, progress=True, device=device
+            model.forward, x, time_emb_noise.shape, time_emb_noise, 
+            clip_denoised=False, model_kwargs=model_kwargs, progress=True, device=device
         )
-        print(samples.shape)
-        for sample,img in zip(samples,x):
-            print(sample.shape)
-            sample = rearrange(sample, '(p1 h1 p2 w1) d-> (p1 p2) (h1 w1) d',p1=3,p2=3,h1=args.image_size//48,w1=args.image_size//48)
-            print(sample.shape)
+        print("Samples shape:", samples.shape)
+        
+        for sample, img in zip(samples, x):
+            print("Raw sample shape:", sample.shape)
+            sample = rearrange(sample, '(p1 h1 p2 w1) d -> (p1 p2) (h1 w1) d', 
+                                 p1=3, p2=3, h1=args.image_size//48, w1=args.image_size//48)
+            print("Rearranged sample shape:", sample.shape)
             sample = sample.mean(1)
             dist = pairwise_distances(sample.cpu().numpy(), time_emb[0].cpu().numpy(), metric='manhattan')
             order = find_permutation(dist)
             pred = np.asarray(order).argsort()
-            print(pred)
+            print("Predicted permutation:", pred)
             abs_results.append(int((pred == indices).all()))
+            
+            # --- Final Puzzle Visualization ---
+            # Reconstruct the final puzzle by reordering the scrambled patches using the predicted order.
+            # For each patch in scrambled_patches, place it at the position indicated by pred.
+            reconstructed_patches = [None] * 9
+            for i, pos in enumerate(pred):
+                reconstructed_patches[pos] = scrambled_patches[i]
+            grid_reconstructed = torch.stack(reconstructed_patches)
+            save_image(grid_reconstructed, "grid_reconstructed.png", nrow=3, normalize=True)
+            plt.figure(figsize=(4, 4))
+            plt.imshow(torchvision.utils.make_grid(grid_reconstructed, nrow=3, normalize=True).permute(1, 2, 0).cpu().numpy())
+            plt.title("Final Reconstructed Puzzle")
+            plt.axis("off")
+            plt.show()
+            # --- End of Final Puzzle Visualization ---
          
-        print("test result on ",len(abs_results), "samples is :", np.asarray(abs_results).sum()/len(abs_results))
+        print("Test result on", len(abs_results), "samples is:", np.asarray(abs_results).sum()/len(abs_results))
         break
-        if len(abs_results)>=2000 and args.dataset == "met":
+        if len(abs_results) >= 2000 and args.dataset == "met":
             break
-        if len(abs_results)>=50000 and args.dataset == "imagenet":
+        if len(abs_results) >= 50000 and args.dataset == "imagenet":
             break
 
 if __name__ == "__main__":
