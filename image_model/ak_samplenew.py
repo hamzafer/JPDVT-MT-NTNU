@@ -57,6 +57,7 @@ def main(args):
     torch.set_grad_enabled(False)
     device = "cuda"
     
+    # (Template code remains unchanged)
     template = np.zeros((6,6))
     for i in range(6):
         for j in range(6):
@@ -91,8 +92,7 @@ def main(args):
 
     diffusion = create_diffusion(str(args.num_sampling_steps))
     if args.dataset == "met":
-        # MET dataloader give out cropped and stitched back images
-        dataset = MET(args.data_path,'test')
+        dataset = MET(args.data_path, 'test')
     elif args.dataset == "imagenet":
         dataset = ImageFolder(args.data_path, transform=transform)
     
@@ -105,7 +105,7 @@ def main(args):
         drop_last=True
     )
 
-    time_emb = torch.tensor(get_2d_sincos_pos_embed(8, 3)).unsqueeze(0).float().to(device)
+    time_emb = torch.tensor(get_2d_sincos_pos_embed(8, args.grid_size)).unsqueeze(0).float().to(device)
     time_emb_noise = torch.tensor(get_2d_sincos_pos_embed(8, 12)).unsqueeze(0).float().to(device)
     time_emb_noise = torch.randn_like(time_emb_noise)
     time_emb_noise = time_emb_noise.repeat(1,1,1)
@@ -122,6 +122,9 @@ def main(args):
         return sort_list
 
     abs_results = []
+    # For a variable grid, let G be the grid size.
+    G = args.grid_size
+
     for x in loader:
         if args.dataset == 'imagenet':
             x, _ = x
@@ -130,22 +133,24 @@ def main(args):
         
         if args.dataset == 'imagenet' and args.crop:
             centercrop = transforms.CenterCrop((64,64))
-            patchs = rearrange(x, 'b c (p1 h1) (p2 w1) -> b c (p1 p2) h1 w1', p1=3, p2=3, h1=96, w1=96)
+            patchs = rearrange(x, 'b c (p1 h1) (p2 w1) -> b c (p1 p2) h1 w1', 
+                               p1=G, p2=G, h1=args.image_size//G, w1=args.image_size//G)
             patchs = centercrop(patchs)
-            x = rearrange(patchs, 'b c (p1 p2) h1 w1 -> b c (p1 h1) (p2 w1)', p1=3, p2=3, h1=64, w1=64)
+            x = rearrange(patchs, 'b c (p1 p2) h1 w1 -> b c (p1 h1) (p2 w1)', 
+                          p1=G, p2=G, h1=args.image_size//G, w1=args.image_size//G)
         
-        # Generate the puzzles: split the image into 9 patches
-        indices = np.random.permutation(9)
+        # Generate the puzzles: split the image into GxG patches
+        indices = np.random.permutation(G * G)
         print("Random permutation indices:", indices)
         x = rearrange(x, 'b c (p1 h1) (p2 w1) -> b c (p1 p2) h1 w1', 
-                      p1=3, p2=3, h1=args.image_size//3, w1=args.image_size//3)
+                      p1=G, p2=G, h1=args.image_size//G, w1=args.image_size//G)
         
         # Save the patches before any permutation
-        patches_before = [x[0, :, i, :, :] for i in range(9)]
+        patches_before = [x[0, :, i, :, :] for i in range(G * G)]
         grid = torch.stack(patches_before)
-        save_image(grid, "debug_patches_before.png", nrow=3, normalize=True)
+        save_image(grid, "debug_patches_before.png", nrow=G, normalize=True)
         plt.figure(figsize=(4, 4))
-        plt.imshow(torchvision.utils.make_grid(grid, nrow=3, normalize=True).permute(1, 2, 0).cpu().numpy())
+        plt.imshow(torchvision.utils.make_grid(grid, nrow=G, normalize=True).permute(1, 2, 0).cpu().numpy())
         plt.title("Patches Before Permutation")
         plt.axis("off")
         plt.show()
@@ -153,18 +158,18 @@ def main(args):
         # Permute the patches
         x = x[:, :, indices, :, :]
         # Save scrambled patches for later visualization of the final puzzle
-        scrambled_patches = [x[0, :, i, :, :] for i in range(9)]
+        scrambled_patches = [x[0, :, i, :, :] for i in range(G * G)]
         grid = torch.stack(scrambled_patches)
-        save_image(grid, "debug_patches_after.png", nrow=3, normalize=True)
+        save_image(grid, "debug_patches_after.png", nrow=G, normalize=True)
         plt.figure(figsize=(4, 4))
-        plt.imshow(torchvision.utils.make_grid(grid, nrow=3, normalize=True).permute(1, 2, 0).cpu().numpy())
+        plt.imshow(torchvision.utils.make_grid(grid, nrow=G, normalize=True).permute(1, 2, 0).cpu().numpy())
         plt.title("Patches After Permutation")
         plt.axis("off")
         plt.show()
         
         # Reassemble the scrambled patches into the final scrambled image
         x = rearrange(x, 'b c (p1 p2) h1 w1 -> b c (p1 h1) (p2 w1)', 
-                      p1=3, p2=3, h1=args.image_size//3, w1=args.image_size//3)
+                      p1=G, p2=G, h1=args.image_size//G, w1=args.image_size//G)
         imshow_tensor(x[0], title="Final Scrambled Image")
         print("Scrambled image shape:", x.shape)
         
@@ -177,8 +182,10 @@ def main(args):
         
         for sample, img in zip(samples, x):
             print("Raw sample shape:", sample.shape)
+            # For the sample reordering, we use a downsampled patch size.
+            sample_patch_dim = args.image_size // (16 * G)  # For grid=3, 192//48=4
             sample = rearrange(sample, '(p1 h1 p2 w1) d -> (p1 p2) (h1 w1) d', 
-                                 p1=3, p2=3, h1=args.image_size//48, w1=args.image_size//48)
+                                 p1=G, p2=G, h1=sample_patch_dim, w1=sample_patch_dim)
             print("Rearranged sample shape:", sample.shape)
             sample = sample.mean(1)
             dist = pairwise_distances(sample.cpu().numpy(), time_emb[0].cpu().numpy(), metric='manhattan')
@@ -189,14 +196,13 @@ def main(args):
             
             # --- Final Puzzle Visualization ---
             # Reconstruct the final puzzle by reordering the scrambled patches using the predicted order.
-            # For each patch in scrambled_patches, place it at the position indicated by pred.
-            reconstructed_patches = [None] * 9
+            reconstructed_patches = [None] * (G * G)
             for i, pos in enumerate(pred):
                 reconstructed_patches[pos] = scrambled_patches[i]
             grid_reconstructed = torch.stack(reconstructed_patches)
-            save_image(grid_reconstructed, "grid_reconstructed.png", nrow=3, normalize=True)
+            save_image(grid_reconstructed, "grid_reconstructed.png", nrow=G, normalize=True)
             plt.figure(figsize=(4, 4))
-            plt.imshow(torchvision.utils.make_grid(grid_reconstructed, nrow=3, normalize=True).permute(1, 2, 0).cpu().numpy())
+            plt.imshow(torchvision.utils.make_grid(grid_reconstructed, nrow=G, normalize=True).permute(1, 2, 0).cpu().numpy())
             plt.title("Final Reconstructed Puzzle")
             plt.axis("off")
             plt.show()
@@ -219,6 +225,8 @@ if __name__ == "__main__":
     parser.add_argument("--num-sampling-steps", type=int, default=250)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--ckpt", type=str, default="/cluster/home/muhamhz/JPDVT/image_model/results/009-imagenet-JPDVT-crop/checkpoints/2850000.pt", help="Default checkpoint path")
+    # New argument to set grid size (e.g., 3 for 3x3, 4 for 4x4, 5 for 5x5)
+    parser.add_argument("--grid-size", type=int, default=3, help="Grid size for the jigsaw puzzle (number of patches per row/column)")
     
     args = parser.parse_args()
 
@@ -229,7 +237,7 @@ if __name__ == "__main__":
     print(f"Using data path: {full_data_path}")
     print(f"Using checkpoint: {args.ckpt}")
 
-    # Pass full_data_path instead of args.data_path
+    # Pass full data path instead of args.data_path
     args.data_path = full_data_path
 
     main(args)
