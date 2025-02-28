@@ -149,7 +149,7 @@ def main():
     logging.info(f"Loading model [{MODEL_NAME}] from checkpoint: {CHECKPOINT_PATH}")
     model = DiT_models[MODEL_NAME](input_size=IMAGE_SIZE).to(DEVICE)
     
-    state_dict = torch.load(CHECKPOINT_PATH, map_location=DEVICE)
+    state_dict = torch.load(CHECKPOINT_PATH, weights_only=False)
     model_state_dict = state_dict['model']
     model_dict = model.state_dict()
     pretrained_dict = {k: v for k, v in model_state_dict.items() if k in model_dict}

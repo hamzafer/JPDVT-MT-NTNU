@@ -1,6 +1,0 @@
-2025-02-28 10:08:15,573 [INFO] ============================================
-2025-02-28 10:08:15,574 [INFO] Starting Jigsaw Puzzle Inference Script
-2025-02-28 10:08:15,579 [INFO] Loading model [JPDVT] from checkpoint: /cluster/home/muhamhz/JPDVT/image_model/results/009-imagenet-JPDVT-crop/checkpoints/2850000.pt
-2025-02-28 10:08:40,755 [INFO] ============================================
-2025-02-28 10:08:40,755 [INFO] Starting Jigsaw Puzzle Inference Script
-2025-02-28 10:08:40,758 [INFO] Loading model [JPDVT] from checkpoint: /cluster/home/muhamhz/JPDVT/image_model/results/009-imagenet-JPDVT-crop/checkpoints/2850000.pt
