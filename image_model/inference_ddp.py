@@ -420,18 +420,18 @@ def main():
             out_dir = os.path.join(RESULTS_BASE_DIR, f"Grid{GRID_SIZE}")
             os.makedirs(out_dir, exist_ok=True)
             
-            # out_original = os.path.join(out_dir, f"{os.path.splitext(filename)[0]}_original.png")
+            out_original = os.path.join(out_dir, f"{os.path.splitext(filename)[0]}_original.png")
             # safe_image_save(original_unnorm[0], out_original, nrow=1, normalize=False)
             
-            # scrambled_unnorm = x_scrambled * 0.5 + 0.5
-            # out_scrambled = os.path.join(out_dir, f"{os.path.splitext(filename)[0]}_random.png")
+            scrambled_unnorm = x_scrambled * 0.5 + 0.5
+            out_scrambled = os.path.join(out_dir, f"{os.path.splitext(filename)[0]}_random.png")
             # safe_image_save(scrambled_unnorm[0], out_scrambled, nrow=1, normalize=False)
             
-            # # Include puzzle correctness in the output filename
-            # out_reconstructed = os.path.join(
-            #     out_dir,
-            #     f"{os.path.splitext(filename)[0]}_reconstructed_pAcc={puzzle_correct}_patchAcc={patch_accuracy_for_img:.2f}.png"
-            # )
+            # Include puzzle correctness in the output filename
+            out_reconstructed = os.path.join(
+                out_dir,
+                f"{os.path.splitext(filename)[0]}_reconstructed_pAcc={puzzle_correct}_patchAcc={patch_accuracy_for_img:.2f}.png"
+            )
             # safe_image_save(grid_reconstructed, out_reconstructed, nrow=GRID_SIZE, normalize=True)
             
             # ========== NEW SINGLE-FILE SAVE: combine all 3 into one image ==========
