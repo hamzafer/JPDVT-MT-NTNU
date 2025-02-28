@@ -263,14 +263,14 @@ def main():
             grid_reconstructed = torch.stack(reconstructed_patches)
             
             # ========== Save results ==========
-            out_dir = os.path.join(RESULTS_BASE_DIR, str(GRID_SIZE))
+            out_dir = os.path.join(RESULTS_BASE_DIR, f"Grid{GRID_SIZE}")
             os.makedirs(out_dir, exist_ok=True)
             
             out_original = os.path.join(out_dir, f"{base_name}_original.png")
             safe_image_save(original_unnorm[0], out_original, nrow=1, normalize=False)
             
             scrambled_unnorm = x_scrambled * 0.5 + 0.5
-            out_scrambled = os.path.join(out_dir, f"{base_name}_scrambled.png")
+            out_scrambled = os.path.join(out_dir, f"{base_name}_random.png")
             safe_image_save(scrambled_unnorm[0], out_scrambled, nrow=1, normalize=False)
             
             # Include puzzle correctness in the output filename
