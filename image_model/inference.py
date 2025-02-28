@@ -267,7 +267,7 @@ def main():
             
             # Scrambled
             scrambled_unnorm = x_scrambled * 0.5 + 0.5
-            out_scrambled = os.path.join(out_dir, f"{base_name}_scrambled.png")
+            out_scrambled = os.path.join(out_dir, f"{base_name}_random.png")
             safe_image_save(scrambled_unnorm[0], out_scrambled, nrow=1, normalize=False)
             
             # Reconstructed
