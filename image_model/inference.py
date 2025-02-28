@@ -2,6 +2,7 @@
 """
 Inference script to solve Jigsaw Puzzles with JPDVT on all .JPEG images
 in a specified directory. Results (images + logs) are saved in user-defined paths.
+Now includes puzzle accuracy and per-patch accuracy metrics.
 """
 
 import os
@@ -15,7 +16,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from PIL import Image
-
 from torchvision import transforms
 from torchvision.utils import save_image
 from einops import rearrange
@@ -44,7 +44,9 @@ NUM_SAMPLING_STEPS = 250
 # System / Misc
 BATCH_NORM_TRAIN_MODE = True  # Because batchnorm doesn't always behave with batch size=1
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".JPEG"]  # Filenames to process
+
+# Extensions to search
+ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".JPEG"]
 
 ###############################################################################
 #                               HELPER FUNCTIONS
@@ -77,13 +79,13 @@ def setup_logging():
     return err_logger
 
 def safe_image_save(tensor_img, out_path, nrow=1, normalize=True):
-    """Safely save a tensor image using `torchvision.save_image`."""
+    """Safely save a tensor image using `torchvision.utils.save_image`."""
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     save_image(tensor_img, out_path, nrow=nrow, normalize=normalize)
 
 def center_crop_arr(pil_image, image_size):
     """
-    Center cropping implementation from ADM:
+    Center cropping implementation from ADM.
     https://github.com/openai/guided-diffusion/blob/8fb3ad9197f16bbc40620447b2742e13458d2831/guided_diffusion/image_datasets.py#L126
     """
     while min(*pil_image.size) >= 2 * image_size:
@@ -169,17 +171,22 @@ def main():
     logging.info("Model and diffusion initialized.")
     logging.info(f"Reading images from: {DATA_DIR}")
     
-    # Get list of all valid images
+    # Get list of all valid images (recursively)
     image_paths = []
     for ext in ALLOWED_EXTENSIONS:
-        image_paths.extend(glob.glob(os.path.join(DATA_DIR, f"*{ext}")))
+        pattern = os.path.join(DATA_DIR, '**', f'*{ext}')
+        image_paths.extend(glob.glob(pattern, recursive=True))
     image_paths = sorted(image_paths)
     
     logging.info(f"Found {len(image_paths)} images to process.")
     
-    # Track accuracy
-    correct_count = 0
+    # Track puzzle-level accuracy (completely correct or not)
+    puzzle_correct_count = 0
     total_count = 0
+    
+    # Track patch-level correctness (sum of correct patches)
+    patch_correct_sum = 0
+    # Each image has GRID_SIZE*GRID_SIZE patches
     start_time = time.time()
     
     for idx, img_path in enumerate(image_paths):
@@ -195,21 +202,14 @@ def main():
             x = load_single_image(img_path, transform=transform).to(DEVICE)
             
             # ========== Original (for saving) ==========
-            # We'll save the original with un-normalized color
-            original_unnorm = x * 0.5 + 0.5
+            original_unnorm = x * 0.5 + 0.5   # unnormalize for saving
             
             # ========== Scramble the puzzle ==========
-            # Create random permutation
             indices = np.random.permutation(GRID_SIZE * GRID_SIZE)
-            
-            # Split into patches
             x_patches = rearrange(x, 'b c (g1 h1) (g2 w1) -> b c (g1 g2) h1 w1',
                                   g1=GRID_SIZE, g2=GRID_SIZE,
                                   h1=IMAGE_SIZE//GRID_SIZE, w1=IMAGE_SIZE//GRID_SIZE)
-            
-            # Permute
-            x_patches = x_patches[:, :, indices, :, :]
-            
+            x_patches = x_patches[:, :, indices, :, :]  # Permute
             # Reassemble scrambled image
             x_scrambled = rearrange(x_patches, 'b c (p1 p2) h1 w1 -> b c (p1 h1) (p2 w1)',
                                     p1=GRID_SIZE, p2=GRID_SIZE,
@@ -231,68 +231,81 @@ def main():
             sample = samples[0]
             
             # ========== Predict permutation ==========
-            # Reshape sample for each patch
-            sample_patch_dim = IMAGE_SIZE // (16 * GRID_SIZE)  # from original logic
+            sample_patch_dim = IMAGE_SIZE // (16 * GRID_SIZE)
             sample = rearrange(sample, '(p1 h1 p2 w1) d -> (p1 p2) (h1 w1) d',
-                               p1=GRID_SIZE, p2=GRID_SIZE, h1=sample_patch_dim, w1=sample_patch_dim)
-            # Mean across spatial dimension
-            sample = sample.mean(1)
+                               p1=GRID_SIZE, p2=GRID_SIZE,
+                               h1=sample_patch_dim, w1=sample_patch_dim)
+            sample = sample.mean(1)  # average across spatial dimension
             
             # Compare with time_emb
             dist = pairwise_distances(sample.cpu().numpy(), time_emb[0].cpu().numpy(), metric='manhattan')
             order = find_permutation(dist)
             pred = np.asarray(order).argsort()
             
-            # Evaluate correctness
-            is_correct = int((pred == indices).all())
-            correct_count += is_correct
+            # Puzzle-level correctness (1 if entire puzzle is correct, else 0)
+            puzzle_correct = int((pred == indices).all())
+            
+            # Patch-level correctness (how many positions match?)
+            patch_matches = (pred == indices).sum()  # e.g. 0..9 for 3x3
+            total_patches_for_img = GRID_SIZE * GRID_SIZE
+            patch_accuracy_for_img = patch_matches / total_patches_for_img
+            
+            # Update counters
+            puzzle_correct_count += puzzle_correct
+            patch_correct_sum += patch_matches
             total_count += 1
             
-            # Reconstruct final puzzle using predicted order
+            # Reconstruct final puzzle
             scrambled_patches_list = [x_patches[0, :, i, :, :] for i in range(GRID_SIZE * GRID_SIZE)]
             reconstructed_patches = [None] * (GRID_SIZE * GRID_SIZE)
             for i, pos in enumerate(pred):
                 reconstructed_patches[pos] = scrambled_patches_list[i]
-            
             grid_reconstructed = torch.stack(reconstructed_patches)
             
             # ========== Save results ==========
-            # Make the directory for this grid size
             out_dir = os.path.join(RESULTS_BASE_DIR, str(GRID_SIZE))
             os.makedirs(out_dir, exist_ok=True)
             
-            # Original
             out_original = os.path.join(out_dir, f"{base_name}_original.png")
             safe_image_save(original_unnorm[0], out_original, nrow=1, normalize=False)
             
-            # Scrambled
             scrambled_unnorm = x_scrambled * 0.5 + 0.5
-            out_scrambled = os.path.join(out_dir, f"{base_name}_random.png")
+            out_scrambled = os.path.join(out_dir, f"{base_name}_scrambled.png")
             safe_image_save(scrambled_unnorm[0], out_scrambled, nrow=1, normalize=False)
             
-            # Reconstructed
-            # We'll normalize to match the original puzzle patches approach
+            # Include puzzle correctness in the output filename
             out_reconstructed = os.path.join(
-                out_dir, f"{base_name}_reconstructed_acc={float(is_correct):.1f}.png"
+                out_dir,
+                f"{base_name}_reconstructed_pAcc={puzzle_correct}_patchAcc={patch_accuracy_for_img:.2f}.png"
             )
-            safe_image_save(grid_reconstructed, out_reconstructed,
-                            nrow=GRID_SIZE, normalize=True)
+            safe_image_save(grid_reconstructed, out_reconstructed, nrow=GRID_SIZE, normalize=True)
             
             elapsed = time.time() - t0
-            logging.info(f"   Finished {filename} | Correct? {bool(is_correct)} | Time: {elapsed:.2f}s")
+            
+            # Running metrics so far
+            puzzle_accuracy_so_far = puzzle_correct_count / total_count
+            patch_accuracy_so_far = patch_correct_sum / (total_count * total_patches_for_img)
+            
+            logging.info(
+                f"   PuzzleAcc={puzzle_correct} PatchAcc={patch_accuracy_for_img:.2f} "
+                f"(Running: puzzleAcc={puzzle_accuracy_so_far:.2f}, patchAcc={patch_accuracy_so_far:.2f}) "
+                f"| Time={elapsed:.2f}s"
+            )
         
         except Exception as e:
-            # Log and continue
             err_logger.error(f"Failed on image {filename}: {str(e)}")
             logging.error(f"Skipping {filename} due to error.")
             continue
     
     # ========== Final Stats ==========
-    overall_accuracy = (correct_count / total_count) if total_count > 0 else 0.0
     total_time = time.time() - start_time
+    puzzle_accuracy = (puzzle_correct_count / total_count) if total_count > 0 else 0.0
+    patch_accuracy = (patch_correct_sum / (total_count * GRID_SIZE * GRID_SIZE)) if total_count > 0 else 0.0
+    
     logging.info("============================================")
-    logging.info(f"Done. Processed {total_count} images. Correct = {correct_count}.")
-    logging.info(f"Final Accuracy: {overall_accuracy:.4f}")
+    logging.info(f"Done. Processed {total_count} images.")
+    logging.info(f"Final Puzzle Accuracy: {puzzle_accuracy:.4f}")
+    logging.info(f"Final Patch Accuracy: {patch_accuracy:.4f}")
     logging.info(f"Total inference time: {total_time:.2f}s")
     logging.info("============================================")
 
