@@ -29,7 +29,7 @@ from diffusion import create_diffusion
 #                               CONFIGURATIONS
 ###############################################################################
 # Paths
-DATA_DIR = "/cluster/home/muhamhz/data/imagenet/test"      # Where test images live
+DATA_DIR = "/cluster/home/muhamhz/data/imagenet/test"
 RESULTS_BASE_DIR = "/cluster/home/muhamhz/JPDVT/image_model/inference"
 LOGS_DIR = "/cluster/home/muhamhz/JPDVT/image_model/logs"
 
@@ -44,7 +44,7 @@ NUM_SAMPLING_STEPS = 250
 # System / Misc
 BATCH_NORM_TRAIN_MODE = True  # Because batchnorm doesn't always behave with batch size=1
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png"]  # Filenames to process
+ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".JPEG"]  # Filenames to process
 
 ###############################################################################
 #                               HELPER FUNCTIONS
