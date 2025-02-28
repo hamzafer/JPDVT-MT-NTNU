@@ -1,2 +1,3 @@
-image_model/results/
 __pycache__/
+image_model/results/
+image_model/inference/
