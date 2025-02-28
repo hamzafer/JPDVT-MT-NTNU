@@ -2,13 +2,19 @@
 """
 Inference script to solve Jigsaw Puzzles with JPDVT on all .JPEG images
 in a specified directory. Results (images + logs) are saved in user-defined paths.
-Now includes puzzle accuracy and per-patch accuracy metrics.
+
+Now includes:
+- Puzzle accuracy (entire puzzle correct or not)
+- Patch accuracy (fraction of individual patches correct)
+- Resume functionality via a CSV log (inference_progress.csv) so the script can
+  pick up where it left off if interrupted.
 """
 
 import os
 import time
 import glob
 import logging
+import csv
 
 import torch
 import torchvision
@@ -48,6 +54,9 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 # Extensions to search
 ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".JPEG"]
 
+# Name for progress CSV (where we record results per image for resume)
+PROGRESS_CSV = "inference_progress.csv"
+
 ###############################################################################
 #                               HELPER FUNCTIONS
 ###############################################################################
@@ -55,7 +64,7 @@ def setup_logging():
     """Set up two loggers: one for normal logs, one for errors."""
     os.makedirs(LOGS_DIR, exist_ok=True)
     
-    # Main log
+    # Main log file
     log_file = os.path.join(LOGS_DIR, "inference_log.txt")
     logging.basicConfig(
         level=logging.INFO,
@@ -66,7 +75,7 @@ def setup_logging():
         ]
     )
     
-    # Error log for images that fail
+    # Separate error log
     error_file = os.path.join(LOGS_DIR, "inference_errors.txt")
     err_logger = logging.getLogger("error_logger")
     err_handler = logging.FileHandler(error_file, mode='a')
@@ -127,6 +136,50 @@ def load_single_image(image_path, transform=None):
         tensor_img = transforms.ToTensor()(pil_img)
     return tensor_img.unsqueeze(0)  # add batch dimension
 
+def load_progress_csv(csv_path):
+    """
+    If progress CSV exists, load it and return:
+    - processed_set: set of all filenames processed
+    - puzzle_correct_count, patch_correct_sum, total_count
+    """
+    processed_set = set()
+    puzzle_correct_count = 0
+    patch_correct_sum = 0
+    total_count = 0
+    
+    if not os.path.exists(csv_path):
+        return processed_set, puzzle_correct_count, patch_correct_sum, total_count
+    
+    with open(csv_path, 'r') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            filename = row["filename"]
+            puzzle_correct = int(row["puzzle_correct"])
+            patch_matches = int(row["patch_matches"])
+            processed_set.add(filename)
+            puzzle_correct_count += puzzle_correct
+            patch_correct_sum += patch_matches
+            total_count += 1
+    
+    return processed_set, puzzle_correct_count, patch_correct_sum, total_count
+
+def append_progress_csv(csv_path, filename, puzzle_correct, patch_matches, elapsed):
+    """
+    Append a single line to the progress CSV for the processed image.
+    """
+    file_exists = os.path.exists(csv_path)
+    with open(csv_path, 'a', newline='') as f:
+        fieldnames = ["filename", "puzzle_correct", "patch_matches", "time_s"]
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        if not file_exists:
+            writer.writeheader()
+        writer.writerow({
+            "filename": filename,
+            "puzzle_correct": puzzle_correct,
+            "patch_matches": patch_matches,
+            "time_s": f"{elapsed:.2f}"
+        })
+
 ###############################################################################
 #                               MAIN INFERENCE LOGIC
 ###############################################################################
@@ -134,7 +187,7 @@ def main():
     # Setup logs
     err_logger = setup_logging()
     logging.info("============================================")
-    logging.info("Starting Jigsaw Puzzle Inference Script")
+    logging.info("Starting Jigsaw Puzzle Inference Script with Resume")
     
     # Seed
     torch.manual_seed(SEED)
@@ -171,30 +224,35 @@ def main():
     logging.info("Model and diffusion initialized.")
     logging.info(f"Reading images from: {DATA_DIR}")
     
-    # Get list of all valid images (recursively)
+    # Build list of all valid images (recursively)
     image_paths = []
     for ext in ALLOWED_EXTENSIONS:
         pattern = os.path.join(DATA_DIR, '**', f'*{ext}')
         image_paths.extend(glob.glob(pattern, recursive=True))
     image_paths = sorted(image_paths)
     
-    logging.info(f"Found {len(image_paths)} images to process.")
+    logging.info(f"Found {len(image_paths)} images total.")
     
-    # Track puzzle-level accuracy (completely correct or not)
-    puzzle_correct_count = 0
-    total_count = 0
+    # Resume logic: load existing progress, if any
+    progress_csv_path = os.path.join(LOGS_DIR, PROGRESS_CSV)
+    processed_set, puzzle_correct_count, patch_correct_sum, total_count = load_progress_csv(progress_csv_path)
     
-    # Track patch-level correctness (sum of correct patches)
-    patch_correct_sum = 0
-    # Each image has GRID_SIZE*GRID_SIZE patches
+    logging.info(f"Resume info: {len(processed_set)} images already processed.")
+    if total_count > 0:
+        logging.info(
+            f"   So far: puzzleAcc = {puzzle_correct_count/total_count:.2f}, "
+            f"patchAcc = {patch_correct_sum/(total_count*GRID_SIZE*GRID_SIZE):.2f}"
+        )
+    
     start_time = time.time()
-    
+    # Process each image, skipping those done
     for idx, img_path in enumerate(image_paths):
         filename = os.path.basename(img_path)
-        base_name, _ = os.path.splitext(filename)
+        if filename in processed_set:
+            # Already done => skip
+            continue
         
-        # For printing progress
-        logging.info(f"Processing {idx+1}/{len(image_paths)}: {filename}")
+        logging.info(f"Processing {total_count+1}/{len(image_paths)}: {filename}")
         
         try:
             t0 = time.time()
@@ -206,14 +264,18 @@ def main():
             
             # ========== Scramble the puzzle ==========
             indices = np.random.permutation(GRID_SIZE * GRID_SIZE)
-            x_patches = rearrange(x, 'b c (g1 h1) (g2 w1) -> b c (g1 g2) h1 w1',
-                                  g1=GRID_SIZE, g2=GRID_SIZE,
-                                  h1=IMAGE_SIZE//GRID_SIZE, w1=IMAGE_SIZE//GRID_SIZE)
+            x_patches = rearrange(
+                x, 'b c (g1 h1) (g2 w1) -> b c (g1 g2) h1 w1',
+                g1=GRID_SIZE, g2=GRID_SIZE,
+                h1=IMAGE_SIZE//GRID_SIZE, w1=IMAGE_SIZE//GRID_SIZE
+            )
             x_patches = x_patches[:, :, indices, :, :]  # Permute
             # Reassemble scrambled image
-            x_scrambled = rearrange(x_patches, 'b c (p1 p2) h1 w1 -> b c (p1 h1) (p2 w1)',
-                                    p1=GRID_SIZE, p2=GRID_SIZE,
-                                    h1=IMAGE_SIZE//GRID_SIZE, w1=IMAGE_SIZE//GRID_SIZE)
+            x_scrambled = rearrange(
+                x_patches, 'b c (p1 p2) h1 w1 -> b c (p1 h1) (p2 w1)',
+                p1=GRID_SIZE, p2=GRID_SIZE,
+                h1=IMAGE_SIZE//GRID_SIZE, w1=IMAGE_SIZE//GRID_SIZE
+            )
             
             # ========== Run diffusion model ==========
             samples = diffusion.p_sample_loop(
@@ -227,14 +289,15 @@ def main():
                 device=DEVICE
             )
             
-            # We only have 1 sample here
-            sample = samples[0]
+            sample = samples[0]  # single batch item
             
             # ========== Predict permutation ==========
             sample_patch_dim = IMAGE_SIZE // (16 * GRID_SIZE)
-            sample = rearrange(sample, '(p1 h1 p2 w1) d -> (p1 p2) (h1 w1) d',
-                               p1=GRID_SIZE, p2=GRID_SIZE,
-                               h1=sample_patch_dim, w1=sample_patch_dim)
+            sample = rearrange(
+                sample, '(p1 h1 p2 w1) d -> (p1 p2) (h1 w1) d',
+                p1=GRID_SIZE, p2=GRID_SIZE,
+                h1=sample_patch_dim, w1=sample_patch_dim
+            )
             sample = sample.mean(1)  # average across spatial dimension
             
             # Compare with time_emb
@@ -242,7 +305,7 @@ def main():
             order = find_permutation(dist)
             pred = np.asarray(order).argsort()
             
-            # Puzzle-level correctness (1 if entire puzzle is correct, else 0)
+            # Puzzle-level correctness (1 if entire puzzle is correct)
             puzzle_correct = int((pred == indices).all())
             
             # Patch-level correctness (how many positions match?)
@@ -256,8 +319,8 @@ def main():
             total_count += 1
             
             # Reconstruct final puzzle
-            scrambled_patches_list = [x_patches[0, :, i, :, :] for i in range(GRID_SIZE * GRID_SIZE)]
-            reconstructed_patches = [None] * (GRID_SIZE * GRID_SIZE)
+            scrambled_patches_list = [x_patches[0, :, i, :, :] for i in range(total_patches_for_img)]
+            reconstructed_patches = [None] * total_patches_for_img
             for i, pos in enumerate(pred):
                 reconstructed_patches[pos] = scrambled_patches_list[i]
             grid_reconstructed = torch.stack(reconstructed_patches)
@@ -266,17 +329,17 @@ def main():
             out_dir = os.path.join(RESULTS_BASE_DIR, f"Grid{GRID_SIZE}")
             os.makedirs(out_dir, exist_ok=True)
             
-            out_original = os.path.join(out_dir, f"{base_name}_original.png")
+            out_original = os.path.join(out_dir, f"{os.path.splitext(filename)[0]}_original.png")
             safe_image_save(original_unnorm[0], out_original, nrow=1, normalize=False)
             
             scrambled_unnorm = x_scrambled * 0.5 + 0.5
-            out_scrambled = os.path.join(out_dir, f"{base_name}_random.png")
+            out_scrambled = os.path.join(out_dir, f"{os.path.splitext(filename)[0]}_random.png")
             safe_image_save(scrambled_unnorm[0], out_scrambled, nrow=1, normalize=False)
             
             # Include puzzle correctness in the output filename
             out_reconstructed = os.path.join(
                 out_dir,
-                f"{base_name}_reconstructed_pAcc={puzzle_correct}_patchAcc={patch_accuracy_for_img:.2f}.png"
+                f"{os.path.splitext(filename)[0]}_reconstructed_pAcc={puzzle_correct}_patchAcc={patch_accuracy_for_img:.2f}.png"
             )
             safe_image_save(grid_reconstructed, out_reconstructed, nrow=GRID_SIZE, normalize=True)
             
@@ -288,8 +351,17 @@ def main():
             
             logging.info(
                 f"   PuzzleAcc={puzzle_correct} PatchAcc={patch_accuracy_for_img:.2f} "
-                f"(Running: puzzleAcc={puzzle_accuracy_so_far:.2f}, patchAcc={patch_accuracy_so_far:.2f}) "
+                f"(Running puzzleAcc={puzzle_accuracy_so_far:.2f}, patchAcc={patch_accuracy_so_far:.2f}) "
                 f"| Time={elapsed:.2f}s"
+            )
+            
+            # Append to progress CSV
+            append_progress_csv(
+                progress_csv_path,
+                filename,
+                puzzle_correct,
+                patch_matches,
+                elapsed
             )
         
         except Exception as e:
@@ -303,7 +375,7 @@ def main():
     patch_accuracy = (patch_correct_sum / (total_count * GRID_SIZE * GRID_SIZE)) if total_count > 0 else 0.0
     
     logging.info("============================================")
-    logging.info(f"Done. Processed {total_count} images.")
+    logging.info(f"Done. Processed {total_count} images (including resumed ones).")
     logging.info(f"Final Puzzle Accuracy: {puzzle_accuracy:.4f}")
     logging.info(f"Final Patch Accuracy: {patch_accuracy:.4f}")
     logging.info(f"Total inference time: {total_time:.2f}s")
