@@ -219,7 +219,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, default="JPDVT")
     parser.add_argument("--dataset", type=str, choices=["imagenet", "met"], default="imagenet")
-    parser.add_argument("--data-path", type=str, default="val", help="Subpath inside /cluster/home/muhamhz/data/imagenet/")
+    parser.add_argument("--data-path", type=str, default="train", help="Subpath inside /cluster/home/muhamhz/data/imagenet/")
     parser.add_argument("--crop", action='store_true', default=False)
     parser.add_argument("--image-size", type=int, choices=[192, 288], default=192)
     parser.add_argument("--num-sampling-steps", type=int, default=250)
