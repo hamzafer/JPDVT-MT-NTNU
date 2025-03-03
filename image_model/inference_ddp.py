@@ -50,7 +50,7 @@ LOGS_DIR = "/cluster/home/muhamhz/JPDVT/image_model/logs"
 MODEL_NAME = "JPDVT"
 CHECKPOINT_PATH = "/cluster/home/muhamhz/JPDVT/image_model/results/009-imagenet-JPDVT-crop/checkpoints/2850000.pt"
 IMAGE_SIZE = 192              # e.g., 192 or 288
-GRID_SIZE = 3                 # e.g., 3 => 3x3 puzzle
+GRID_SIZE = 4                 # e.g., 3 => 3x3 puzzle
 SEED = 0
 NUM_SAMPLING_STEPS = 250
 
