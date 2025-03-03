@@ -132,9 +132,12 @@ def main(args):
         logger = create_logger(None)
 
     # Create model:
-    assert args.image_size % 3 == 0, "Image size should be multiples of 3"
+    # -- Changed this assertion to depend on args.patch_grid --
+    assert args.image_size % args.patch_grid == 0, f"Image size ({args.image_size}) must be divisible by patch grid ({args.patch_grid})."
     if args.dataset == 'imagenet':
+        # you can keep or remove this check if needed
         assert args.image_size == 288 or args.crop, "Use --image-size=192 if you run imagenet with gap"
+
     model = DiT_models[args.model](
         input_size=args.image_size
     )
@@ -143,25 +146,19 @@ def main(args):
     train_steps = 0
 
     ########################################
-    # FIRST, wrap the model in DDP or load?
+    # wrap the model in DDP
     ########################################
-    # Actually, let's do the approach you had: we define the model, then wrap it in DDP:
-    # (So "model.module" is valid below).
-    # Move to device and wrap in DDP
     model.to(device)
     model = DDP(model, device_ids=[rank])
 
     # Create the EMA model from the current model's weights:
-    # Note: because we only need its parameters, we pass model.module to keep the "raw" underlying network.
     ema = deepcopy(model.module).to(device)
     requires_grad(ema, False)
 
-    # ### CHANGED: If a checkpoint is provided, load it fully (model, ema, opt, train_steps).
+    # If a checkpoint is provided, load it:
     if args.ckpt != "":
         ckpt_path = args.ckpt
         print(f"Rank={rank}: Loading checkpoint from {ckpt_path}")
-
-        # For PyTorch 2.6, ensure weights_only=False so we can load non-tensor objects
         checkpoint = torch.load(ckpt_path, weights_only=False)
 
         if "model" in checkpoint:
@@ -176,16 +173,10 @@ def main(args):
         else:
             print(f"Rank={rank}: WARNING: 'ema' not found in checkpoint.")
 
-        # We'll create the optimizer below, so let's also restore if we have it:
-        # (But only rank=0 logs messages to avoid confusion)
-        # We'll store "train_steps" if present.
-        if "opt" in checkpoint:
-            opt_state = checkpoint["opt"]
-        else:
-            opt_state = None
+        opt_state = checkpoint["opt"] if "opt" in checkpoint else None
+        if opt_state is None:
             print(f"Rank={rank}: WARNING: 'opt' not found in checkpoint.")
 
-        # Attempt to load "train_steps" if present
         if "train_steps" in checkpoint:
             train_steps = checkpoint["train_steps"]
             if rank == 0:
@@ -193,14 +184,15 @@ def main(args):
         else:
             if rank == 0:
                 print("No 'train_steps' in checkpoint, so we'll start from 0.")
+    else:
+        opt_state = None
 
-    diffusion = create_diffusion(timestep_respacing="")  # default: 1000 steps, linear noise schedule
+    diffusion = create_diffusion(timestep_respacing="")  # default: 1000 steps
     if rank == 0:
         logger.info(f"DiT Parameters: {sum(p.numel() for p in model.parameters()):,}")
 
     # Setup optimizer:
     opt = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=0)
-    # ### If we had an optimizer state in the checkpoint, load it now
     if args.ckpt != "" and opt_state is not None:
         opt.load_state_dict(opt_state)
         if rank == 0:
@@ -240,9 +232,8 @@ def main(args):
         logger.info(f"Dataset contains {len(dataset):,} images")
 
     # Prepare models for training:
-    # If we're continuing from a checkpoint, we've already loaded model & ema states above.
-    model.train()  # important! This enables embedding dropout for classifier-free guidance
-    ema.eval()     # EMA model should always be in eval mode
+    model.train()
+    ema.eval()
 
     log_steps = 0
     running_loss = 0
@@ -250,6 +241,9 @@ def main(args):
 
     if rank == 0:
         logger.info(f"Training for {args.epochs} epochs...")
+
+    # Create the center-crop transform for the patch if requested:
+    patch_center_crop = transforms.CenterCrop((args.final_crop_size, args.final_crop_size))
 
     for epoch in range(args.epochs):
         sampler.set_epoch(epoch)
@@ -261,11 +255,30 @@ def main(args):
                 x, _ = x  # discard class labels
             x = x.to(device)
 
+            # --- Only do patch splitting if args.crop is True ---
             if args.dataset == 'imagenet' and args.crop:
-                centercrop = transforms.CenterCrop((64, 64))
-                patchs = rearrange(x, 'b c (p1 h1) (p2 w1)-> b c (p1 p2) h1 w1', p1=3, p2=3, h1=96, w1=96)
-                patchs = centercrop(patchs)
-                x = rearrange(patchs, 'b c (p1 p2) h1 w1-> b c (p1 h1) (p2 w1)', p1=3, p2=3, h1=64, w1=64)
+                # rearrange into patch_grid×patch_grid blocks:
+                # each patch is (args.pre_crop_size × args.pre_crop_size)
+                patchs = rearrange(
+                    x,
+                    'b c (p1 h1) (p2 w1) -> b c (p1 p2) h1 w1',
+                    p1=args.patch_grid,
+                    p2=args.patch_grid,
+                    h1=args.pre_crop_size,
+                    w1=args.pre_crop_size
+                )
+                # Apply center crop to each patch:
+                patchs = patch_center_crop(patchs)
+
+                # Rearrange back to the original size but with final cropped patches:
+                x = rearrange(
+                    patchs,
+                    'b c (p1 p2) h1 w1 -> b c (p1 h1) (p2 w1)',
+                    p1=args.patch_grid,
+                    p2=args.patch_grid,
+                    h1=args.final_crop_size,
+                    w1=args.final_crop_size
+                )
 
             # Set up initial positional embedding
             time_emb = torch.tensor(get_2d_sincos_pos_embed(8, 3)).unsqueeze(0).float().to(device)
@@ -279,8 +292,8 @@ def main(args):
                 t,
                 time_emb,
                 model_kwargs,
-                block_size=args.image_size // 3,
-                patch_size=16,
+                block_size=args.image_size // args.patch_grid,  # was /3, now /patch_grid
+                patch_size=16,  # can keep or make an arg
                 add_mask=args.add_mask
             )
             loss = loss_dict["loss"].mean()
@@ -313,7 +326,7 @@ def main(args):
                 log_steps = 0
                 start_time = time()
 
-            # Save JPDVT checkpoint
+            # Save checkpoint
             if train_steps % args.ckpt_every == 0 and train_steps > 0:
                 if rank == 0:
                     checkpoint = {
@@ -321,14 +334,14 @@ def main(args):
                         "ema": ema.state_dict(),
                         "opt": opt.state_dict(),
                         "args": args,
-                        "train_steps": train_steps  # ### ADDED: store the current step
+                        "train_steps": train_steps
                     }
                     checkpoint_path = f"{checkpoint_dir}/{train_steps:07d}.pt"
                     torch.save(checkpoint, checkpoint_path)
                     logger.info(f"Saved checkpoint to {checkpoint_path}")
                 dist.barrier()
 
-    model.eval()  # important! This disables randomized embedding dropout
+    model.eval()
 
     if rank == 0:
         logger.info("Done!")
@@ -343,7 +356,8 @@ if __name__ == "__main__":
     parser.add_argument("--data-path", type=str, required=True)
     parser.add_argument("--crop", action='store_true', default=False)
     parser.add_argument("--add-mask", action='store_true', default=False)
-    parser.add_argument("--image-size", type=int, choices=[192, 288], default=288)
+    # Allow any image size, just keep it consistent with patch grid
+    parser.add_argument("--image-size", type=int, default=288)
     parser.add_argument("--epochs", type=int, default=500)
     parser.add_argument("--global-batch-size", type=int, default=96)
     parser.add_argument("--global-seed", type=int, default=0)
@@ -351,5 +365,15 @@ if __name__ == "__main__":
     parser.add_argument("--log-every", type=int, default=100)
     parser.add_argument("--ckpt-every", type=int, default=10000)
     parser.add_argument("--ckpt", type=str, default='')
+    #
+    # ----------------- New arguments for 4×4 (or arbitrary) patch splitting ----------------- #
+    #
+    parser.add_argument("--patch-grid", type=int, default=4,
+                        help="Number of patches in each dimension, e.g., 4 => 4×4 patches.")
+    parser.add_argument("--pre-crop-size", type=int, default=72,
+                        help="Size of each patch before applying center-crop (e.g., 72 => 72×72 per patch).")
+    parser.add_argument("--final-crop-size", type=int, default=64,
+                        help="Size of each patch after center-crop (e.g., 64 => 64×64 per patch).")
+
     args = parser.parse_args()
     main(args)
