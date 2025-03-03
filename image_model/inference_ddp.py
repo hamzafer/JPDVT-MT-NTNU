@@ -329,10 +329,10 @@ def main():
                 f"patchAcc = {patch_correct_sum/(total_count*GRID_SIZE*GRID_SIZE):.2f}"
             )
     
-    # We'll keep local counters separate, then allreduce at the end
-    local_puzzle_correct_count = 0
-    local_patch_correct_sum = 0
-    local_total_count = 0
+    # ADDED: Initialize local counters proportionally based on rank
+    local_puzzle_correct_count = puzzle_correct_count // world_size
+    local_patch_correct_sum = patch_correct_sum // world_size
+    local_total_count = total_count // world_size
     
     start_time = time.time()
     # Process each image, skipping those done
@@ -392,8 +392,8 @@ def main():
             sample = sample.mean(1)  # average across spatial dimension
             
             # Compare with time_emb
-            dist = pairwise_distances(sample.cpu().numpy(), time_emb[0].cpu().numpy(), metric='manhattan')
-            order = find_permutation(dist)
+            distance_matrix = pairwise_distances(sample.cpu().numpy(), time_emb[0].cpu().numpy(), metric='manhattan')
+            order = find_permutation(distance_matrix)
             pred = np.asarray(order).argsort()
             
             # Puzzle-level correctness (1 if entire puzzle is correct)
