@@ -131,43 +131,60 @@ def main(args):
     else:
         logger = create_logger(None)
 
-    # Create model:
-    assert args.image_size % 3 == 0, "Image size should be Multiples of 3"
-    if args.dataset == 'imagenet':
-        assert args.image_size == 288 or args.crop, "Set imagesize to 192 if run experiment on imagenet with gap"
-    model = DiT_models[args.model](
-        input_size=args.image_size
-    )
+    # ### CHANGED/REMOVED ### 
+    # Remove or relax the old "image_size % 3 == 0" assertion.
+    #   Because for 4×4 puzzle, we need multiples of 4 instead.
+    # ---------------------------------------------------------
+    # OLD:
+    # assert args.image_size % 3 == 0, "Image size should be Multiples of 3"
+    # 
+    # We'll simply remove it or check for 3 or 4:
+    if args.image_size not in [192, 256, 288]:
+        logger.info("Warning: image_size not in [192, 256, 288]. Proceeding anyway...")
 
-    if args.ckpt!= "":
+    # Additional checks for special logic:
+    # For 3×3 puzzle => image-size=192 or 288 w/ center-cropping
+    # For 4×4 puzzle => image-size=256
+    # 
+    # But let's skip strict forcing in code; just proceed if user sets them properly.
+
+    if args.dataset == 'imagenet' and args.crop:
+        logger.info("Will rearrange into puzzle patches using the 'crop' logic.")
+
+    # Create model:
+    model = DiT_models[args.model](input_size=args.image_size)
+
+    # Optionally load checkpoint
+    if args.ckpt != "":
         ckpt_path = args.ckpt
-        print("Load model from ",ckpt_path)
+        print("Loading model from", ckpt_path)
         model_dict = model.state_dict()
-        state_dict = torch.load(ckpt_path)
+        state_dict = torch.load(ckpt_path, weights_only=False)
         pretrained_dict = {k: v for k, v in state_dict.items() if k in model_dict}
         model.load_state_dict(pretrained_dict, strict=False)
 
-    # Note that parameter initialization is done within the DiT constructor
-    ema = deepcopy(model).to(device)  # Create an EMA of the model for use after training
+    # Create EMA model
+    ema = deepcopy(model).to(device)
     requires_grad(ema, False)
     model = DDP(model.to(device), device_ids=[rank])
-    diffusion = create_diffusion(timestep_respacing="")  # default: 1000 steps, linear noise schedule
+    diffusion = create_diffusion(timestep_respacing="")
     logger.info(f"DiT Parameters: {sum(p.numel() for p in model.parameters()):,}")
 
-    # Setup optimizer (we used default Adam betas=(0.9, 0.999) and a constant learning rate of 1e-4 in our paper):
+    # Optimizer
     opt = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=0)
 
+    # Basic transforms
     transform = transforms.Compose([
         transforms.Lambda(lambda pil_image: center_crop_arr(pil_image, 288)),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5], inplace=True)
+        transforms.Normalize(mean=[0.5, 0.5, 0.5],
+                             std=[0.5, 0.5, 0.5], inplace=True)
     ])
 
-    # Setup data:
+    # Setup dataset
     if args.dataset == "met":
-        # MET dataloader give out croped and stitched back images
-        dataset = MET(args.data_path,'train')
+        dataset = MET(args.data_path, 'train')
     elif args.dataset == "imagenet":
         dataset = ImageFolder(args.data_path, transform=transform)
   
@@ -204,49 +221,97 @@ def main(args):
     for epoch in range(args.epochs):
         sampler.set_epoch(epoch)
         logger.info(f"Beginning epoch {epoch}...")
-        for x in loader:
-            if args.dataset == 'imagenet':
-                x, _ = x
-            x = x.to(device)
-            if args.dataset == 'imagenet' and args.crop:
-                centercrop = transforms.CenterCrop((64,64))
-                patchs = rearrange(x, 'b c (p1 h1) (p2 w1)-> b c (p1 p2) h1 w1',p1=3,p2=3,h1=96,w1=96)
-                patchs = centercrop(patchs)
-                x = rearrange(patchs, 'b c (p1 p2) h1 w1-> b c (p1 h1) (p2 w1)',p1=3,p2=3,h1=64,w1=64)
 
-            # Set up initial positional embedding
+        for x_batch in loader:
+            if args.dataset == 'imagenet':
+                x_batch, _ = x_batch  # ImageFolder returns (img, label)
+
+            x_batch = x_batch.to(device)
+            puzzle_dim = 3
+
+            # ### CHANGED / ADDED ###
+            # If we are using --crop with imagenet, we want to do puzzle rearrangement.
+            # Hardcode logic for 3×3 or 4×4 puzzle based on image_size:
+            if args.dataset == 'imagenet' and args.crop:
+                if args.image_size == 192:
+                    # 3×3 puzzle
+                    # Each full image is 192×192 => 3 patches in each dimension => each patch is 64×64 after center-crop.
+                    # So we first shape them into (3×96) => center-crop(64×64).
+                    centercrop = transforms.CenterCrop((64, 64))
+                    x_resh = rearrange(
+                        x_batch, 'b c (p1 h1) (p2 w1) -> b c (p1 p2) h1 w1',
+                        p1=3, p2=3, h1=96, w1=96
+                    )
+                    x_resh = centercrop(x_resh)  # from 96×96 -> 64×64
+                    x_batch = rearrange(
+                        x_resh, 'b c (p1 p2) h1 w1 -> b c (p1 h1) (p2 w1)',
+                        p1=3, p2=3, h1=64, w1=64
+                    )
+
+                elif args.image_size == 256:
+                    puzzle_dim = 4
+                    # 4×4 puzzle
+                    # Each full image is 256×256 => 4 patches in each dimension => each patch is ~64×64.
+                    # We can replicate the logic from above but with p1=4, p2=4, etc.
+                    centercrop = transforms.CenterCrop((64, 64))
+                    # Split into 4×4 => each patch is 64+something => let's assume 64×64 is final:
+                    # We can do 4×(64+16) = 4×80 = 320, so that would require the image to be 320. 
+                    # But we have 256, so each patch is already 64 => no center-crop needed. 
+                    # For consistency with the code, let's do a small center-crop (if we want). 
+                    # If the entire image is 256×256, each patch is exactly 64×64 => no crop required. 
+                    # Let's skip the centercrop to keep it minimal:
+                    x_resh = rearrange(
+                        x_batch, 'b c (p1 h1) (p2 w1) -> b c (p1 p2) h1 w1',
+                        p1=4, p2=4, h1=64, w1=64
+                    )
+                    # If you REALLY want to center-crop inside each patch, you'd do:
+                    # x_resh = centercrop(x_resh)
+                    # but that would shrink each patch to 48×48. We'll skip that.
+                    x_batch = rearrange(
+                        x_resh, 'b c (p1 p2) h1 w1 -> b c (p1 h1) (p2 w1)',
+                        p1=4, p2=4, h1=64, w1=64
+                    )
+
+            # Build 2D sin-cos embedding (example: 8-dim)
             time_emb = torch.tensor(get_2d_sincos_pos_embed(8, 3)).unsqueeze(0).float().to(device)
 
-            t = torch.randint(0, diffusion.num_timesteps, (x.shape[0],), device=device)
-            model_kwargs = None
-            loss_dict = diffusion.training_losses(model, x, t, time_emb, model_kwargs, \
-                block_size=args.image_size//3, patch_size=16, add_mask=args.add_mask)
+            # Random diffusion timestep
+            t = torch.randint(0, diffusion.num_timesteps, (x_batch.shape[0],), device=device)
+            # You can pass additional kwargs if needed
+            loss_dict = diffusion.training_losses(
+                model,
+                x_batch,
+                t,
+                time_emb=time_emb,
+                model_kwargs=None,
+                block_size=args.image_size // puzzle_dim,
+                patch_size=16,
+                add_mask=args.add_mask
+            )
             loss = loss_dict["loss"].mean()
             opt.zero_grad()
             loss.backward()
             opt.step()
             update_ema(ema, model.module)
 
-            # Log loss values:
             running_loss += loss.item()
             log_steps += 1
             train_steps += 1
+
+            # Logging
             if train_steps % args.log_every == 0:
-                # Measure training speed:
                 torch.cuda.synchronize()
                 end_time = time()
                 steps_per_sec = log_steps / (end_time - start_time)
-                # Reduce loss history over all processes:
                 avg_loss = torch.tensor(running_loss / log_steps, device=device)
                 dist.all_reduce(avg_loss, op=dist.ReduceOp.SUM)
                 avg_loss = avg_loss.item() / dist.get_world_size()
-                logger.info(f"(step={train_steps:07d}) Train Loss: {avg_loss:.4f}, Train Steps/Sec: {steps_per_sec:.2f}")
-                # Reset monitoring variables:
+                logger.info(f"(step={train_steps:07d}) loss: {avg_loss:.4f}, steps/sec: {steps_per_sec:.2f}")
                 running_loss = 0
                 log_steps = 0
                 start_time = time()
 
-            # Save JPDVT checkpoint:
+            # Save checkpoint
             if train_steps % args.ckpt_every == 0 and train_steps > 0:
                 if rank == 0:
                     checkpoint = {
@@ -260,8 +325,7 @@ def main(args):
                     logger.info(f"Saved checkpoint to {checkpoint_path}")
                 dist.barrier()
 
-    model.eval()  # important! This disables randomized embedding dropout
-
+    model.eval()
     logger.info("Done!")
     cleanup()
 
@@ -270,16 +334,17 @@ if __name__ == "__main__":
     parser.add_argument("--results-dir", type=str, default="results")
     parser.add_argument("--model", type=str, choices=list(DiT_models.keys()), default="JPDVT")
     parser.add_argument("--dataset", type=str, choices=["imagenet", "met"], default="imagenet")
-    parser.add_argument("--data-path", type=str,required=True)
+    parser.add_argument("--data-path", type=str, required=True)
     parser.add_argument("--crop", action='store_true', default=False)
     parser.add_argument("--add-mask", action='store_true', default=False)
-    parser.add_argument("--image-size", type=int, choices=[192, 288], default=288)
+    # ### CHANGED ### allow 256 for 4x4:
+    parser.add_argument("--image-size", type=int, choices=[192, 256, 288], default=288)
     parser.add_argument("--epochs", type=int, default=500)
     parser.add_argument("--global-batch-size", type=int, default=96)
     parser.add_argument("--global-seed", type=int, default=0)
     parser.add_argument("--num-workers", type=int, default=12)
     parser.add_argument("--log-every", type=int, default=100)
-    parser.add_argument("--ckpt-every", type=int, default=10_000)
+    parser.add_argument("--ckpt-every", type=int, default=10000)
     parser.add_argument("--ckpt", type=str, default='')
     args = parser.parse_args()
     main(args)
