@@ -750,25 +750,44 @@ class GaussianDiffusion:
         noise_x = th.randn_like(x_start)
         time_emb_start = time_emb_start.repeat(x_start.shape[0],1,1)
         
-        def shuffle_and_mask(x_start,time_emb_start):
-            indices = np.random.permutation(9)
-            x_start = rearrange(x_start, 'b c (p1 h1) (p2 w1)-> b c (p1 p2) h1 w1',p1=3,p2=3,h1=block_size,w1=block_size)
+        def shuffle_and_mask(x_start, time_emb_start):
+            indices = np.random.permutation(16)  # 16 patches now (4×4)
+            x_start = rearrange(
+                x_start,
+                'b c (p1 h1) (p2 w1) -> b c (p1 p2) h1 w1',
+                p1=4, p2=4, h1=block_size, w1=block_size
+            )
             masks = th.ones_like(x_start)
             if add_mask:
                 for i in range(x_start.shape[0]):
-                    r = np.random.randint(0,4)
-                    mask = random.sample(range(9), r)
-                    masks[i,:,mask,:,:] = 0
-            x_start = x_start[:,:,indices,:,:]
-            
-            x_start = rearrange(x_start, ' b c (p1 p2) h1 w1->b c (p1 h1) (p2 w1)',p1=3,p2=3,h1=block_size,w1=block_size)
-            masks = rearrange(masks, ' b c (p1 p2) h1 w1->b c (p1 h1) (p2 w1)',p1=3,p2=3,h1=block_size,w1=block_size)
+                    r = np.random.randint(0, 4)
+                    mask = random.sample(range(16), r)  # pick up to 4 from 16
+                    masks[i, :, mask, :, :] = 0
 
-            time_emb_start = time_emb_start[:,indices,:]
-            time_emb_start = time_emb_start.unsqueeze(2).repeat(1,1,(block_size//patch_size)**2,1)
-            time_emb_start = rearrange(time_emb_start, 'c (p1 p2) (h1 w1) d -> c (p1 h1 p2 w1) d',p1=3, p2=3, h1=block_size//patch_size, w1=block_size//patch_size)
+            x_start = x_start[:, :, indices, :, :]  # shuffle 16 patches
 
-            return x_start,time_emb_start,masks
+            x_start = rearrange(
+                x_start,
+                'b c (p1 p2) h1 w1 -> b c (p1 h1) (p2 w1)',
+                p1=4, p2=4, h1=block_size, w1=block_size
+            )
+            masks = rearrange(
+                masks,
+                'b c (p1 p2) h1 w1 -> b c (p1 h1) (p2 w1)',
+                p1=4, p2=4, h1=block_size, w1=block_size
+            )
+
+            time_emb_start = time_emb_start[:, indices, :]
+            time_emb_start = time_emb_start.unsqueeze(2).repeat(
+                1, 1, (block_size // patch_size) ** 2, 1
+            )
+            time_emb_start = rearrange(
+                time_emb_start,
+                'c (p1 p2) (h1 w1) d -> c (p1 h1 p2 w1) d',
+                p1=4, p2=4, h1=block_size // patch_size, w1=block_size // patch_size
+            )
+
+            return x_start, time_emb_start, masks
 
         x_start,time_emb_start,masks = shuffle_and_mask(x_start,time_emb_start)
         noise_time_emb = th.randn_like(time_emb_start)

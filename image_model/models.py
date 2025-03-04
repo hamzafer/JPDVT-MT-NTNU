@@ -241,25 +241,35 @@ class DiT(nn.Module):
 
     def forward(self, x, t, time_emb, y=None):
         """
-        Forward pass of DiT.
-        x: (N, C, H, W) tensor of spatial inputs (images or latent representations of images)
-        t: (N,) tensor of diffusion timesteps
-        y: (N,) tensor of class labels
+        x: (N, C, H, W) input
+        t: (N,) diffusion timesteps
+        time_emb: (N, ?) initial time embedding
         """
+        # 1) Basic embeddings
         time_emb = self.time_emb_in(time_emb)
-        x = self.x_embedder(x) + time_emb + self.pos_embed  # (N, T, D), where T = H * W / patch_size ** 2
-        t = self.t_embedder(t)                   # (N, D)
-        # y = self.y_embedder(y, self.training)    # (N, D)
-        c = t                               # (N, D)
-        for block in self.blocks:
-            x = block(x, c)                      # (N, T, D)
-        x = self.final_layer(x, c)                # (N, T, patch_size ** 2 * out_channels)
-        time_emb = self.time_emb_out1(x)
-        time_emb = self.time_emb_out_silu(time_emb)
-        time_emb = self.time_emb_out2(time_emb)
-        x = self.unpatchify(x)                   # (N, out_channels, H, W)
+        x = self.x_embedder(x) + time_emb + self.pos_embed  # shape [N, T, 768]
+        t = self.t_embedder(t)
+        c = t
 
-        return x,time_emb
+        # 2) Transformer blocks
+        for block in self.blocks:
+            x = block(x, c)  # shape stays [N, T, 768]
+
+        # 3) -- TAKE TIME_EMB HERE --
+        #    We have [N, T, 768]. Flatten it for the MLP:
+        B, T, D = x.shape  # e.g. D=768
+        x_flat = x.reshape(B * T, D)
+        x_flat = self.time_emb_out1(x_flat)
+        x_flat = self.time_emb_out_silu(x_flat)
+        time_emb_out = self.time_emb_out2(x_flat)        # e.g. => shape [B*T, final_dim]
+        time_emb_out = time_emb_out.reshape(B, T, -1)    # back to [N, T, final_dim]
+
+        # 4) Final layer => image reconstruction
+        x_img = self.final_layer(x, c)    # shape [N, T, patch_size^2 * out_channels]
+        x_img = self.unpatchify(x_img)    # shape [N, out_channels, H, W]
+
+        return x_img, time_emb_out
+
 
     def forward_with_cfg(self, x, t, y, cfg_scale):
         """

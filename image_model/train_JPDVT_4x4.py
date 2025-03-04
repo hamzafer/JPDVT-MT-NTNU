@@ -166,7 +166,7 @@ def main(args):
     # Create EMA model
     ema = deepcopy(model).to(device)
     requires_grad(ema, False)
-    model = DDP(model.to(device), device_ids=[rank])
+    model = DDP(model.to(device), device_ids=[rank], find_unused_parameters=True)
     diffusion = create_diffusion(timestep_respacing="")
     logger.info(f"DiT Parameters: {sum(p.numel() for p in model.parameters()):,}")
 
@@ -175,7 +175,7 @@ def main(args):
 
     # Basic transforms
     transform = transforms.Compose([
-        transforms.Lambda(lambda pil_image: center_crop_arr(pil_image, 288)),
+        transforms.Lambda(lambda pil_image: center_crop_arr(pil_image, args.image_size)),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.5, 0.5, 0.5],
@@ -273,7 +273,7 @@ def main(args):
                     )
 
             # Build 2D sin-cos embedding (example: 8-dim)
-            time_emb = torch.tensor(get_2d_sincos_pos_embed(8, 3)).unsqueeze(0).float().to(device)
+            time_emb = torch.tensor(get_2d_sincos_pos_embed(8, 4)).unsqueeze(0).float().to(device)
 
             # Random diffusion timestep
             t = torch.randint(0, diffusion.num_timesteps, (x_batch.shape[0],), device=device)
@@ -282,10 +282,10 @@ def main(args):
                 model,
                 x_batch,
                 t,
-                time_emb=time_emb,
+                time_emb,
                 model_kwargs=None,
                 block_size=args.image_size // puzzle_dim,
-                patch_size=16,
+                patch_size=64,
                 add_mask=args.add_mask
             )
             loss = loss_dict["loss"].mean()
