@@ -47,15 +47,15 @@ RESULTS_BASE_DIR = "/cluster/home/muhamhz/JPDVT/image_model/inference"
 LOGS_DIR = "/cluster/home/muhamhz/JPDVT/image_model/logs"
 
 # Model / Inference params
-MODEL_NAME = "JPDVT"
-CHECKPOINT_PATH = "/cluster/home/muhamhz/JPDVT/image_model/results/009-imagenet-JPDVT-crop/checkpoints/2850000.pt"
-IMAGE_SIZE = 192              # e.g., 192 or 288
-GRID_SIZE = 4                 # e.g., 3 => 3x3 puzzle
+MODEL_NAME = "JPDVT-T"
+CHECKPOINT_PATH = "/cluster/home/muhamhz/JPDVT/image_model/results/000-imagenet-JPDVT-T-crop/checkpoints/1400000.pt"
+IMAGE_SIZE = 256              # e.g., 192 or 288
+GRID_SIZE = 4                # e.g., 3 => 3x3 puzzle
 SEED = 0
 NUM_SAMPLING_STEPS = 250
 
 # System / Misc
-BATCH_NORM_TRAIN_MODE = True  # Because batchnorm doesn't always behave with batch size=1
+BATCH_NORM_TRAIN_MODE = False  # Because batchnorm doesn't always behave with batch size=1
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Extensions to search
@@ -297,7 +297,7 @@ def main():
     
     # Prepare time embedding
     time_emb = torch.tensor(get_2d_sincos_pos_embed(8, GRID_SIZE)).unsqueeze(0).float().to(DEVICE)
-    time_emb_noise = torch.tensor(get_2d_sincos_pos_embed(8, 12)).unsqueeze(0).float().to(DEVICE)
+    time_emb_noise = torch.tensor(get_2d_sincos_pos_embed(8, 4)).unsqueeze(0).float().to(DEVICE)
     time_emb_noise = torch.randn_like(time_emb_noise).repeat(1, 1, 1)
     
     if rank == 0:
@@ -376,14 +376,14 @@ def main():
                 time_emb_noise,
                 clip_denoised=False,
                 model_kwargs=None,
-                progress=False,
+                progress=True,
                 device=DEVICE
             )
             
             sample = samples[0]  # single batch item
             
             # ========== Predict permutation ==========
-            sample_patch_dim = IMAGE_SIZE // (16 * GRID_SIZE)
+            sample_patch_dim = IMAGE_SIZE // (64 * GRID_SIZE)
             sample = rearrange(
                 sample, '(p1 h1 p2 w1) d -> (p1 p2) (h1 w1) d',
                 p1=GRID_SIZE, p2=GRID_SIZE,
