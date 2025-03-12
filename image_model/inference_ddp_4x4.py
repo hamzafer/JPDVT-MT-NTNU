@@ -367,6 +367,7 @@ def main():
                 p1=GRID_SIZE, p2=GRID_SIZE,
                 h1=IMAGE_SIZE//GRID_SIZE, w1=IMAGE_SIZE//GRID_SIZE
             )
+            scrambled_unnorm = x_scrambled * 0.5 + 0.5
             
             # ========== Run diffusion model ==========
             samples = diffusion.p_sample_loop(
@@ -416,34 +417,40 @@ def main():
                 reconstructed_patches[pos] = scrambled_patches_list[i]
             grid_reconstructed = torch.stack(reconstructed_patches)
             
-            # ========== Save results (EXISTING LINES: do not remove) ==========
-            out_dir = os.path.join(RESULTS_BASE_DIR, f"Grid{GRID_SIZE}")
-            os.makedirs(out_dir, exist_ok=True)
-            
-            out_original = os.path.join(out_dir, f"{os.path.splitext(filename)[0]}_original.png")
-            # safe_image_save(original_unnorm[0], out_original, nrow=1, normalize=False)
-            
-            scrambled_unnorm = x_scrambled * 0.5 + 0.5
-            out_scrambled = os.path.join(out_dir, f"{os.path.splitext(filename)[0]}_random.png")
-            # safe_image_save(scrambled_unnorm[0], out_scrambled, nrow=1, normalize=False)
-            
-            # Include puzzle correctness in the output filename
-            out_reconstructed = os.path.join(
-                out_dir,
-                f"{os.path.splitext(filename)[0]}_reconstructed_pAcc={puzzle_correct}_patchAcc={patch_accuracy_for_img:.2f}.png"
+            # Unnormalize and then reassemble into a single (3, H, W) image
+            grid_reconstructed_unnorm = grid_reconstructed * 0.5 + 0.5
+            final_reconstructed = rearrange(
+                grid_reconstructed_unnorm,
+                '(g1 g2) c h w -> c (g1 h) (g2 w)',
+                g1=GRID_SIZE, g2=GRID_SIZE
             )
-            # safe_image_save(grid_reconstructed, out_reconstructed, nrow=GRID_SIZE, normalize=True)
             
-            # ========== NEW SINGLE-FILE SAVE: combine all 3 into one image ==========
-            combined_image_path = os.path.join(
+            # ========== SAVE A SINGLE COMBINED IMAGE ==========
+            # Concatenate horizontally: original | spacer | scrambled | spacer | reconstructed
+
+            # (1) Decide how many pixels of spacing you want
+            spacing_width = 10
+            # (2) Create a white spacer of shape (3, H, spacing_width)
+            #     Here, H = IMAGE_SIZE because original_unnorm, scrambled_unnorm, final_reconstructed all share height.
+            white_spacer = torch.ones((3, IMAGE_SIZE, spacing_width), device=DEVICE)
+
+            # (3) Concatenate all: original + spacer + scrambled + spacer + reconstructed
+            combined = torch.cat([
+                original_unnorm[0],
+                white_spacer,            # first spacer
+                scrambled_unnorm[0],
+                white_spacer,            # second spacer
+                final_reconstructed
+            ], dim=2)
+
+            # Output name includes puzzle correctness and patch accuracy
+            out_dir = os.path.join(RESULTS_BASE_DIR, f"Grid{GRID_SIZE}")
+            out_combined = os.path.join(
                 out_dir,
                 f"{os.path.splitext(filename)[0]}_combined_pAcc={puzzle_correct}_patchAcc={patch_accuracy_for_img:.2f}.png"
             )
-            # Convert original_unnorm[0], scrambled_unnorm[0], and grid_reconstructed into one
-            combined_pil = combine_into_one_image(original_unnorm[0], scrambled_unnorm[0], grid_reconstructed, GRID_SIZE)
-            combined_pil.save(combined_image_path)
-            # (This is the single new change for storing 3 images in one file)
-            
+            safe_image_save(combined, out_combined, nrow=1, normalize=False)
+
             elapsed = time.time() - t0
             
             # Running metrics so far (just for rank's local data)
