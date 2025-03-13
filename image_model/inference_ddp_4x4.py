@@ -377,7 +377,7 @@ def main():
                 time_emb_noise,
                 clip_denoised=False,
                 model_kwargs=None,
-                progress=True,
+                progress=False,
                 device=DEVICE
             )
             
