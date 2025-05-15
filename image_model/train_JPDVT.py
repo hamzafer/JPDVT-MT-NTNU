@@ -281,7 +281,8 @@ def main(args):
                 model_kwargs,
                 block_size=args.image_size // 3,
                 patch_size=16,
-                add_mask=args.add_mask
+                add_mask=args.add_mask,
+                grid_size=3  # Explicitly set for 3x3
             )
             loss = loss_dict["loss"].mean()
             opt.zero_grad()

@@ -286,7 +286,8 @@ def main(args):
                 model_kwargs=None,
                 block_size=args.image_size // puzzle_dim,
                 patch_size=64,
-                add_mask=args.add_mask
+                add_mask=args.add_mask,
+                grid_size=4  # Explicitly set for 4x4
             )
             loss = loss_dict["loss"].mean()
             opt.zero_grad()

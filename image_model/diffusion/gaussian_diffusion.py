@@ -733,7 +733,7 @@ class GaussianDiffusion:
         output = th.where((t == 0), decoder_nll, kl)
         return {"output": output, "pred_xstart": out["pred_xstart"]}
 
-    def training_losses(self, model, x_start, t, time_emb_start, model_kwargs=None, noise=None, block_size=96, patch_size=16, add_mask=False):
+    def training_losses(self, model, x_start, t, time_emb_start, model_kwargs=None, noise=None, block_size=96, patch_size=16, add_mask=False, grid_size=3):
         """
         Compute training losses for a single timestep.
         :param model: the model to evaluate loss on.
@@ -742,6 +742,7 @@ class GaussianDiffusion:
         :param model_kwargs: if not None, a dict of extra keyword arguments to
             pass to the model. This can be used for conditioning.
         :param noise: if specified, the specific Gaussian noise to try to remove.
+        :param grid_size: Size of grid (3 for 3x3, 4 for 4x4)
         :return: a dict with the key "loss" containing a tensor of shape [N].
                  Some mean or variance settings may also have other keys.
         """
@@ -751,30 +752,31 @@ class GaussianDiffusion:
         time_emb_start = time_emb_start.repeat(x_start.shape[0],1,1)
         
         def shuffle_and_mask(x_start, time_emb_start):
-            indices = np.random.permutation(16)  # 16 patches now (4×4)
+            num_patches = grid_size * grid_size
+            indices = np.random.permutation(num_patches)
             x_start = rearrange(
                 x_start,
                 'b c (p1 h1) (p2 w1) -> b c (p1 p2) h1 w1',
-                p1=4, p2=4, h1=block_size, w1=block_size
+                p1=grid_size, p2=grid_size, h1=block_size, w1=block_size
             )
             masks = th.ones_like(x_start)
             if add_mask:
                 for i in range(x_start.shape[0]):
-                    r = np.random.randint(0, 4)
-                    mask = random.sample(range(16), r)  # pick up to 4 from 16
+                    r = np.random.randint(0, grid_size)  # Adjust max random patches based on grid size
+                    mask = random.sample(range(num_patches), r)
                     masks[i, :, mask, :, :] = 0
 
-            x_start = x_start[:, :, indices, :, :]  # shuffle 16 patches
+            x_start = x_start[:, :, indices, :, :]
 
             x_start = rearrange(
                 x_start,
                 'b c (p1 p2) h1 w1 -> b c (p1 h1) (p2 w1)',
-                p1=4, p2=4, h1=block_size, w1=block_size
+                p1=grid_size, p2=grid_size, h1=block_size, w1=block_size
             )
             masks = rearrange(
                 masks,
                 'b c (p1 p2) h1 w1 -> b c (p1 h1) (p2 w1)',
-                p1=4, p2=4, h1=block_size, w1=block_size
+                p1=grid_size, p2=grid_size, h1=block_size, w1=block_size
             )
 
             time_emb_start = time_emb_start[:, indices, :]
@@ -784,7 +786,7 @@ class GaussianDiffusion:
             time_emb_start = rearrange(
                 time_emb_start,
                 'c (p1 p2) (h1 w1) d -> c (p1 h1 p2 w1) d',
-                p1=4, p2=4, h1=block_size // patch_size, w1=block_size // patch_size
+                p1=grid_size, p2=grid_size, h1=block_size // patch_size, w1=block_size // patch_size
             )
 
             return x_start, time_emb_start, masks
