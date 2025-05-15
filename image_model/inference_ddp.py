@@ -14,6 +14,8 @@ ADDED FOR DISTRIBUTED + SINGLE-FILE SAVING:
 - Minimal lines to handle multiple GPUs (DDP). Each rank processes a subset of images.
 - A tiny helper to combine Original|Scrambled|Reconstructed into ONE file,
   without removing your existing lines that save 3 separate files.
+
+Local Run: torchrun --nproc_per_node=2 inference_ddp.py (ntnu login node)
 """
 
 import os
@@ -41,16 +43,21 @@ from diffusion import create_diffusion
 ###############################################################################
 #                               CONFIGURATIONS
 ###############################################################################
-# Paths
-DATA_DIR = "/cluster/home/muhamhz/data/imagenet/test"
-RESULTS_BASE_DIR = "/cluster/home/muhamhz/JPDVT/image_model/inference"
-LOGS_DIR = "/cluster/home/muhamhz/JPDVT/image_model/logs"
+# Paths with automatic creation
+BASE_DIR = "/cluster/home/muhamhz/JPDVT/image_model"
+DATA_DIR = "/cluster/home/muhamhz/data/imagenet/test"  # input data path
+RESULTS_BASE_DIR = os.path.join(BASE_DIR, "inference_fresh")  # new output dir
+LOGS_DIR = os.path.join(BASE_DIR, "logs_fresh")  # new logs dir
+
+# Create directories if they don't exist
+os.makedirs(RESULTS_BASE_DIR, exist_ok=True)
+os.makedirs(LOGS_DIR, exist_ok=True)
 
 # Model / Inference params
 MODEL_NAME = "JPDVT"
-CHECKPOINT_PATH = "/cluster/home/muhamhz/JPDVT/image_model/results/009-imagenet-JPDVT-crop/checkpoints/2850000.pt"
-IMAGE_SIZE = 192              # e.g., 192 or 288
-GRID_SIZE = 4                 # e.g., 3 => 3x3 puzzle
+CHECKPOINT_PATH = "/cluster/home/muhamhz/JPDVT/image_model/models/3x3_Full/2850000.pt"
+IMAGE_SIZE = 192              
+GRID_SIZE = 3                 
 SEED = 0
 NUM_SAMPLING_STEPS = 250
 
@@ -62,7 +69,7 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".JPEG"]
 
 # Name for progress CSV (where we record results per image for resume)
-PROGRESS_CSV = "inference_progress.csv"
+PROGRESS_CSV = "fresh_inference_progress.csv"
 
 ###############################################################################
 #                            ADDED: DISTRIBUTED SETUP
