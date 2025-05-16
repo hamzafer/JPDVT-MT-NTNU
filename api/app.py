@@ -8,6 +8,7 @@ from fastapi import FastAPI, File, UploadFile, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 import sys
 import torchvision
@@ -152,11 +153,15 @@ async def load_model():
 class SolveRequest(BaseModel):
     image_data: str
     model_id: str = "default"
+    
+    model_config = {
+        "protected_namespaces": ()
+    }
 
 @app.get("/")
 async def root():
-    """Root endpoint - redirect to frontend."""
-    return {"status": "ok", "message": "Jigsaw Puzzle Solver API is running"}
+    """Redirect to index.html"""
+    return RedirectResponse(url="/index.html")
 
 @app.get("/api/models")
 async def get_models():
