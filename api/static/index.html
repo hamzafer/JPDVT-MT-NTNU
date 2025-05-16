@@ -165,12 +165,26 @@
         .metrics {
             margin-top: 15px;
             padding: 10px;
-            background-color: #f5f5f5;
             border-radius: 5px;
+            transition: background-color 0.3s;
         }
         
-        .metrics p {
-            margin: 5px 0;
+        #initial-metrics {
+            border-left: 4px solid #dc3545;
+        }
+        
+        #metrics {
+            border-left: 4px solid #28a745;
+        }
+        
+        .improvement {
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .metrics h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
         }
     </style>
 </head>
@@ -205,6 +219,12 @@
                 <h3>Solution Metrics</h3>
                 <p id="puzzle-correct">Puzzle correctly solved: </p>
                 <p id="patch-accuracy">Patch accuracy: </p>
+            </div>
+
+            <div id="initial-metrics" class="metrics" style="display: none; background-color: #ffe8e8;">
+                <h3>Initial Scramble Metrics</h3>
+                <p id="initial-puzzle-correct">Puzzle correctly arranged: </p>
+                <p id="initial-patch-accuracy">Patch accuracy: </p>
             </div>
         </div>
         
@@ -243,6 +263,9 @@
             const metricsElement = document.getElementById('metrics');
             const puzzleCorrectElement = document.getElementById('puzzle-correct');
             const patchAccuracyElement = document.getElementById('patch-accuracy');
+            const initialMetricsElement = document.getElementById('initial-metrics');
+            const initialPuzzleCorrectElement = document.getElementById('initial-puzzle-correct');
+            const initialPatchAccuracyElement = document.getElementById('initial-patch-accuracy');
             
             let currentImageBase64 = null;
             let currentPuzzleBase64 = null;
@@ -284,7 +307,7 @@
                 reader.readAsDataURL(file);
             });
             
-            // Randomize puzzle
+            // Update the randomize button event listener
             randomizeBtn.addEventListener('click', async function() {
                 if (!currentImageBase64) return;
                 
@@ -312,25 +335,37 @@
                     
                     const result = await response.json();
                     
-                    // Update UI with the scrambled puzzle
-                    originalImage.src = 'data:image/png;base64,' + result.original_image;
-                    puzzleImage.src = 'data:image/png;base64,' + result.puzzle_image;
+                    // Store data for the solve step
                     currentPuzzleBase64 = result.puzzle_image;
                     originalIndices = result.indices;
                     
+                    // Update UI with the images
+                    originalImage.src = 'data:image/png;base64,' + result.original_image;
+                    puzzleImage.src = 'data:image/png;base64,' + result.puzzle_image;
+                    
+                    // Show initial metrics if available
+                    if (result.initial_metrics) {
+                        initialPuzzleCorrectElement.textContent = `Patches in correct position: ${result.initial_metrics.patch_matches} of ${result.initial_metrics.total_patches}`;
+                        initialPatchAccuracyElement.textContent = `Patch accuracy: ${(result.initial_metrics.patch_accuracy * 100).toFixed(2)}%`;
+                        initialMetricsElement.style.display = 'block';
+                    }
+                    
                     solveBtn.disabled = false;
                     solutionContainer.style.display = 'none';
-                    metricsElement.style.display = 'none';
+                    metricsElement.style.display = 'none'; // Hide previous solution metrics
+                    imageInfoElement.style.display = 'none'; // Hide previous image info
+                    
+                    showStatus('Puzzle scrambled! Ready to solve.', true);
                 } catch (error) {
                     showStatus('Failed to randomize puzzle: ' + error.message, false);
                 } finally {
                     showLoading(false);
                 }
             });
-            
-            // Solve puzzle
+
+            // Update the solve button event listener
             solveBtn.addEventListener('click', async function() {
-                if (!currentPuzzleBase64) return;
+                if (!currentPuzzleBase64 || !originalIndices) return;
                 
                 showLoading(true);
                 
@@ -344,33 +379,47 @@
                         },
                         body: JSON.stringify({
                             image_data: currentPuzzleBase64,
-                            model_id: selectedModel
+                            model_id: selectedModel,
+                            indices: originalIndices
                         })
                     });
                     
                     const result = await response.json();
                     
                     if (result.success) {
+                        // Display solution image
                         solutionImage.src = 'data:image/png;base64,' + result.solution_image;
                         solutionContainer.style.display = 'block';
                         
-                        // If the backend didn't provide metrics, we can't display them
+                        // Display metrics
                         if (result.metrics) {
-                            // Show metrics
-                            puzzleCorrectElement.textContent = `Puzzle correctly solved: ${result.metrics.puzzle_correct ? 'Yes' : 'No'}`;
-                            patchAccuracyElement.textContent = `Patch accuracy: ${(result.metrics.patch_accuracy * 100).toFixed(2)}%`;
+                            // Show final metrics with color coding based on success
+                            const isSuccess = result.metrics.puzzle_correct;
+                            const accuracyColor = isSuccess ? '#d4edda' : (result.metrics.patch_accuracy > 0.5 ? '#fff3cd' : '#f8d7da');
+                            
+                            puzzleCorrectElement.textContent = `Puzzle perfectly solved: ${isSuccess ? 'Yes' : 'No'}`;
+                            patchAccuracyElement.textContent = `Patches correct: ${result.metrics.patch_matches}/${result.metrics.total_patches} (${(result.metrics.patch_accuracy * 100).toFixed(2)}%)`;
+                            
+                            // Apply color to metrics display
+                            metricsElement.style.backgroundColor = accuracyColor;
                             metricsElement.style.display = 'block';
                             
                             // Show success/failure message
-                            const isSuccess = result.metrics.puzzle_correct;
                             showStatus(
                                 isSuccess 
-                                    ? 'Puzzle solved successfully!' 
-                                    : `Puzzle partially solved. ${result.metrics.patch_matches} of ${result.metrics.total_patches} patches correct.`, 
-                                isSuccess
+                                    ? 'Perfect solution! All patches correctly placed.' 
+                                    : `${result.metrics.patch_matches} of ${result.metrics.total_patches} patches correctly placed.`, 
+                                result.metrics.patch_accuracy > 0.5
                             );
-                        } else {
-                            showStatus('Puzzle solution generated!', true);
+                        }
+                        
+                        // Display image info and processing time
+                        if (result.image_info) {
+                            gridSizeElement.textContent = result.image_info.grid_size;
+                            imageResolutionElement.textContent = result.image_info.image_resolution;
+                            patchSizeElement.textContent = result.image_info.patch_size;
+                            processingTimeElement.textContent = result.processing_time;
+                            imageInfoElement.style.display = 'block';
                         }
                     } else {
                         showStatus('Could not solve the puzzle.', false);

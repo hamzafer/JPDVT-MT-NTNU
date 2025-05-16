@@ -15,6 +15,7 @@ import torchvision
 from torchvision import transforms
 from einops import rearrange
 from sklearn.metrics import pairwise_distances
+import time
 
 # Add the parent directory to PATH so we can import from image_model
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -153,6 +154,7 @@ async def load_model():
 class SolveRequest(BaseModel):
     image_data: str
     model_id: str = "default"
+    indices: list[int] = None
     
     model_config = {
         "protected_namespaces": ()
@@ -179,11 +181,6 @@ async def get_models():
 async def create_puzzle(file: UploadFile = File(...), seed: int = Form(None)):
     """
     Create a scrambled puzzle from an uploaded image.
-    
-    Returns:
-        Original image (base64)
-        Scrambled puzzle (base64)
-        Indices used for scrambling
     """
     if not file:
         raise HTTPException(status_code=400, detail="No file uploaded")
@@ -202,8 +199,9 @@ async def create_puzzle(file: UploadFile = File(...), seed: int = Form(None)):
         # Original image for reference
         original_base64 = tensor_to_base64(x)
         
-        # Scramble the puzzle
+        # Scramble the puzzle - precisely following the notebook approach
         indices = np.random.permutation(GRID_SIZE * GRID_SIZE)
+        
         x_patches = rearrange(
             x, 'b c (g1 h1) (g2 w1) -> b c (g1 g2) h1 w1',
             g1=GRID_SIZE, g2=GRID_SIZE,
@@ -221,10 +219,21 @@ async def create_puzzle(file: UploadFile = File(...), seed: int = Form(None)):
         # Convert scrambled image to base64
         puzzle_base64 = tensor_to_base64(x_scrambled)
         
+        # Calculate initial metrics based on scrambling
+        # For a completely scrambled puzzle, patch accuracy can be calculated
+        patch_matches = (indices == np.arange(GRID_SIZE * GRID_SIZE)).sum()
+        total_patches = GRID_SIZE * GRID_SIZE
+        patch_accuracy = patch_matches / total_patches
+        
         return {
             "original_image": original_base64,
             "puzzle_image": puzzle_base64,
-            "indices": indices.tolist()
+            "indices": indices.tolist(),
+            "initial_metrics": {
+                "patch_matches": int(patch_matches),
+                "total_patches": total_patches,
+                "patch_accuracy": float(patch_accuracy),
+            }
         }
     
     except Exception as e:
@@ -334,16 +343,21 @@ async def solve_puzzle(file: UploadFile = File(...)):
 async def solve(data: SolveRequest):
     """
     Solve a jigsaw puzzle from a base64-encoded image.
-    This endpoint handles pre-scrambled images from frontend.
     """
     if not model:
         raise HTTPException(status_code=500, detail="Model not loaded yet")
     
     try:
+        # Track execution time
+        start_time = time.time()
+        
         # Decode base64 image
         image_data = base64.b64decode(data.image_data)
         pil_img = Image.open(io.BytesIO(image_data)).convert("RGB")
         x_scrambled = transform(pil_img).unsqueeze(0).to(DEVICE)
+        
+        # Get original indices from the request - these are the scrambling indices
+        original_indices = np.array(data.indices)
         
         # Run diffusion model
         samples = diffusion.p_sample_loop(
@@ -359,8 +373,7 @@ async def solve(data: SolveRequest):
         
         sample = samples[0]  # single batch item
         
-        # Predict permutation - need to estimate grid patches from scrambled image
-        # Note: This assumes the scrambled image is a valid 3x3 grid
+        # Extract patches from the scrambled image
         x_patches = rearrange(
             x_scrambled, 'b c (p1 h1) (p2 w1) -> b c (p1 p2) h1 w1',
             p1=GRID_SIZE, p2=GRID_SIZE,
@@ -381,8 +394,14 @@ async def solve(data: SolveRequest):
         order = find_permutation(distance_matrix)
         pred = np.asarray(order).argsort()
         
-        # Reconstruct final puzzle
+        # Calculate metrics directly comparing predicted order with original indices
+        # This is exactly how the notebook does it
+        puzzle_correct = int((pred == original_indices).all())
+        patch_matches = (pred == original_indices).sum()
         total_patches = GRID_SIZE * GRID_SIZE
+        patch_accuracy = patch_matches / total_patches
+        
+        # Reconstruct final puzzle
         scrambled_patches_list = [x_patches[0, :, i, :, :] for i in range(total_patches)]
         reconstructed_patches = [None] * total_patches
         for i, pos in enumerate(pred):
@@ -392,10 +411,25 @@ async def solve(data: SolveRequest):
         # Create reconstructed image
         reconstructed_base64 = tensor_to_base64(grid_reconstructed, nrow=GRID_SIZE)
         
+        # Calculate elapsed time
+        elapsed_time = time.time() - start_time
+        
         return {
             "success": True,
             "solution_image": reconstructed_base64,
-            "predicted_order": pred.tolist()
+            "predicted_order": pred.tolist(),
+            "metrics": {
+                "puzzle_correct": puzzle_correct,
+                "patch_matches": int(patch_matches), 
+                "total_patches": total_patches,
+                "patch_accuracy": float(patch_accuracy),  
+            },
+            "image_info": {
+                "grid_size": f"{GRID_SIZE}x{GRID_SIZE}",
+                "image_resolution": f"{IMAGE_SIZE}x{IMAGE_SIZE}",
+                "patch_size": f"{IMAGE_SIZE//GRID_SIZE}x{IMAGE_SIZE//GRID_SIZE}"
+            },
+            "processing_time": round(elapsed_time, 2)
         }
     
     except Exception as e:
