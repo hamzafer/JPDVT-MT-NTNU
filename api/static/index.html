@@ -186,6 +186,41 @@
             margin-top: 0;
             margin-bottom: 10px;
         }
+
+        .info-panel {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #e9f5ff;
+            border-radius: 5px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .info-panel h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+        }
+
+        .info-panel p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+
+        .info-panel .time {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            background-color: var(--secondary-color);
+            margin-right: 5px;
+        }
     </style>
 </head>
 <body>
@@ -225,6 +260,14 @@
                 <h3>Initial Scramble Metrics</h3>
                 <p id="initial-puzzle-correct">Puzzle correctly arranged: </p>
                 <p id="initial-patch-accuracy">Patch accuracy: </p>
+            </div>
+
+            <div id="image-info" class="info-panel" style="display: none;">
+                <h3>Image Information</h3>
+                <p><span class="badge">Grid</span> <span id="grid-size"></span></p>
+                <p><span class="badge">Resolution</span> <span id="image-resolution"></span></p>
+                <p><span class="badge">Patch Size</span> <span id="patch-size"></span></p>
+                <p><span class="badge">Processing Time</span> <span id="processing-time" class="time"></span> seconds</p>
             </div>
         </div>
         
@@ -266,6 +309,11 @@
             const initialMetricsElement = document.getElementById('initial-metrics');
             const initialPuzzleCorrectElement = document.getElementById('initial-puzzle-correct');
             const initialPatchAccuracyElement = document.getElementById('initial-patch-accuracy');
+            const imageInfoElement = document.getElementById('image-info');
+            const gridSizeElement = document.getElementById('grid-size');
+            const imageResolutionElement = document.getElementById('image-resolution');
+            const patchSizeElement = document.getElementById('patch-size');
+            const processingTimeElement = document.getElementById('processing-time');
             
             let currentImageBase64 = null;
             let currentPuzzleBase64 = null;
