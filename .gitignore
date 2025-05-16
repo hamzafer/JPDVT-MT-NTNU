@@ -2,3 +2,4 @@ __pycache__/
 image_model/results/
 image_model/inference/
 image_model/models/
+.history
