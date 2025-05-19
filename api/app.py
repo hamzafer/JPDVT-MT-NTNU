@@ -168,12 +168,16 @@ async def root():
 @app.get("/api/models")
 async def get_models():
     """Get available models."""
-    # For now, just return your single model
     return [
         {
             "id": "default",
             "name": "JPDVT",
             "description": "3x3 Grid Jigsaw Puzzle Solver"
+        },
+        {
+            "id": "fcvit",
+            "name": "FCViT",
+            "description": "Fragment Contextual Vision Transformer Puzzle Solver"
         }
     ]
 
