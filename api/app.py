@@ -461,6 +461,9 @@ async def solve_with_fcvit(image_data, indices=None):
     
     device = "cuda" if torch.cuda.is_available() else "cpu"
     
+    # Track execution time
+    start_time = time.time()
+    
     # Prepare model
     ckpt = torch.load(CKPT_PATH, map_location="cpu", weights_only=True)
     state = {k.replace("module.", "", 1): v for k, v in ckpt["model"].items()}
@@ -471,70 +474,82 @@ async def solve_with_fcvit(image_data, indices=None):
     model.augment_fragment = transforms.Resize((FRAG_SIZE, FRAG_SIZE), antialias=True)
     
     # Process image
-    img_data = base64.b64decode(image_data)
-    img = Image.open(io.BytesIO(img_data)).convert("RGB")
-    
-    tfs = transforms.Compose([
-        transforms.Resize((PUZZLE_SIZE, PUZZLE_SIZE), antialias=True),
-        transforms.ToTensor()
-    ])
-    img_tensor = tfs(img).unsqueeze(0).to(device)
-    
-    # Run inference
-    with torch.no_grad():
-        pred_gpu, tgt_gpu = model(img_tensor)
-    
-    pred_ = model.mapping(pred_gpu.clone())
-    map_coord = model.map_coord.cpu()
-    
-    # Get predicted order
-    mask_pred = (pred_[0][:, None, :] == map_coord).all(-1).long()
-    pred_order = mask_pred.argmax(dim=1).tolist()
-    
-    # Create reconstructed image
-    def unshuffle(tensor, order):
-        C, H, W = tensor.shape
-        p = FRAG_SIZE
-        pieces = [tensor[:, i:i+p, j:j+p] for i in range(0, H, p) for j in range(0, W, p)]
-        grid = [pieces[idx] for idx in order]
-        rows = [torch.cat(grid[i:i+3], dim=2) for i in range(0, 9, 3)]
-        return torch.cat(rows, dim=1)
-    
-    reconstructed = unshuffle(img_tensor[0].cpu(), pred_order)
-    
-    # Convert to image
-    result_img = transforms.ToPILImage()(reconstructed)
-    buffered = io.BytesIO()
-    result_img.save(buffered, format="PNG")
-    solution_image = base64.b64encode(buffered.getvalue()).decode("utf-8")
-    
-    # Calculate metrics
-    if indices:
-        patch_matches = sum(1 for i, j in zip(pred_order, indices) if i == j)
-        patch_accuracy = patch_matches / NUM_FRAG
-        puzzle_correct = patch_matches == NUM_FRAG
-    else:
-        patch_matches = 0
-        patch_accuracy = 0
-        puzzle_correct = False
-    
-    # Return similar format to your existing API
-    return {
-        "success": True,
-        "solution_image": solution_image,
-        "metrics": {
-            "patch_matches": patch_matches,
-            "total_patches": NUM_FRAG,
-            "patch_accuracy": patch_accuracy,
-            "puzzle_correct": puzzle_correct
-        },
-        "image_info": {
-            "grid_size": "3x3",
-            "image_resolution": f"{PUZZLE_SIZE}x{PUZZLE_SIZE}",
-            "patch_size": f"{FRAG_SIZE}x{FRAG_SIZE}"
-        },
-        "processing_time": "1.0"  # Placeholder, you could add actual timing
-    }
+    try:
+        img_data = base64.b64decode(image_data)
+        img = Image.open(io.BytesIO(img_data)).convert("RGB")
+        
+        tfs = transforms.Compose([
+            transforms.Resize((PUZZLE_SIZE, PUZZLE_SIZE), antialias=True),
+            transforms.ToTensor()
+        ])
+        img_tensor = tfs(img).unsqueeze(0).to(device)
+        
+        # Run inference
+        with torch.no_grad():
+            pred_gpu, tgt_gpu = model(img_tensor)
+        
+        # Move prediction to CPU before comparison
+        pred_ = model.mapping(pred_gpu.clone()).cpu()
+        map_coord = model.map_coord.cpu()
+        
+        # Get predicted order - now both tensors are on CPU
+        mask_pred = (pred_[0][:, None, :] == map_coord).all(-1).long()
+        pred_order = mask_pred.argmax(dim=1).tolist()
+        
+        # Create reconstructed image
+        def unshuffle(tensor, order):
+            C, H, W = tensor.shape
+            p = FRAG_SIZE
+            pieces = [tensor[:, i:i+p, j:j+p] for i in range(0, H, p) for j in range(0, W, p)]
+            grid = [pieces[idx] for idx in order]
+            rows = [torch.cat(grid[i:i+3], dim=2) for i in range(0, 9, 3)]
+            return torch.cat(rows, dim=1)
+        
+        # Move image tensor to CPU for reconstruction
+        img_cpu = img_tensor[0].cpu()
+        reconstructed = unshuffle(img_cpu, pred_order)
+        
+        # Convert to image
+        result_img = transforms.ToPILImage()(reconstructed)
+        buffered = io.BytesIO()
+        result_img.save(buffered, format="PNG")
+        solution_image = base64.b64encode(buffered.getvalue()).decode("utf-8")
+        
+        # Calculate metrics
+        if indices and isinstance(indices, list) and len(indices) == NUM_FRAG:
+            patch_matches = sum(1 for i, j in zip(pred_order, indices) if i == j)
+            patch_accuracy = patch_matches / NUM_FRAG
+            puzzle_correct = patch_matches == NUM_FRAG
+        else:
+            patch_matches = 0
+            patch_accuracy = 0
+            puzzle_correct = False
+        
+        # Calculate elapsed time
+        elapsed_time = time.time() - start_time
+        
+        # Return similar format to your existing API
+        return {
+            "success": True,
+            "solution_image": solution_image,
+            "predicted_order": pred_order,  # Added this to match JPDVT output format
+            "metrics": {
+                "puzzle_correct": puzzle_correct,
+                "patch_matches": int(patch_matches),
+                "total_patches": NUM_FRAG,
+                "patch_accuracy": float(patch_accuracy)
+            },
+            "image_info": {
+                "grid_size": "3x3",
+                "image_resolution": f"{PUZZLE_SIZE}x{PUZZLE_SIZE}",
+                "patch_size": f"{FRAG_SIZE}x{FRAG_SIZE}"
+            },
+            "processing_time": round(elapsed_time, 2)
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error solving puzzle with FCViT: {str(e)}")
 
 # Serve static files for frontend
 app.mount("/", StaticFiles(directory="api/static", html=True), name="static")
