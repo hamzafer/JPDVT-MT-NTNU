@@ -24,6 +24,10 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from image_model.models import DiT_models, get_2d_sincos_pos_embed  
 from image_model.diffusion import create_diffusion
 
+# Add imports at the top of your file
+sys.path.append('/cluster/home/muhamhz/fcvit-mt-ntnu2')
+from puzzle_fcvit import FCViT
+
 ###############################################################################
 #                               CONFIGURATIONS
 ###############################################################################
@@ -348,6 +352,11 @@ async def solve(data: SolveRequest):
     """
     Solve a jigsaw puzzle from a base64-encoded image.
     """
+    # Check if model_id is fcvit
+    if data.model_id == "fcvit":
+        return await solve_with_fcvit(data.image_data, data.indices)
+    
+    # Default JPDVT model logic
     if not model:
         raise HTTPException(status_code=500, detail="Model not loaded yet")
     
@@ -440,6 +449,92 @@ async def solve(data: SolveRequest):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error solving puzzle: {str(e)}")
+
+# Add this function to handle FCViT inference
+async def solve_with_fcvit(image_data, indices=None):
+    # Constants from infer_visualise.py
+    CKPT_PATH = "/cluster/home/muhamhz/fcvit-mt-ntnu/checkpoint/FCViT_base_3x3_ep100_lr3e-05_b64.pt"
+    BACKBONE = "vit_base_patch16_224"
+    PUZZLE_SIZE = 225
+    FRAG_SIZE = 75
+    NUM_FRAG = 9
+    
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    
+    # Prepare model
+    ckpt = torch.load(CKPT_PATH, map_location="cpu", weights_only=True)
+    state = {k.replace("module.", "", 1): v for k, v in ckpt["model"].items()}
+    
+    model = FCViT(backbone=BACKBONE, num_fragment=NUM_FRAG, size_fragment=FRAG_SIZE).to(device)
+    model.load_state_dict(state, strict=True)
+    model.eval()
+    model.augment_fragment = transforms.Resize((FRAG_SIZE, FRAG_SIZE), antialias=True)
+    
+    # Process image
+    img_data = base64.b64decode(image_data)
+    img = Image.open(io.BytesIO(img_data)).convert("RGB")
+    
+    tfs = transforms.Compose([
+        transforms.Resize((PUZZLE_SIZE, PUZZLE_SIZE), antialias=True),
+        transforms.ToTensor()
+    ])
+    img_tensor = tfs(img).unsqueeze(0).to(device)
+    
+    # Run inference
+    with torch.no_grad():
+        pred_gpu, tgt_gpu = model(img_tensor)
+    
+    pred_ = model.mapping(pred_gpu.clone())
+    map_coord = model.map_coord.cpu()
+    
+    # Get predicted order
+    mask_pred = (pred_[0][:, None, :] == map_coord).all(-1).long()
+    pred_order = mask_pred.argmax(dim=1).tolist()
+    
+    # Create reconstructed image
+    def unshuffle(tensor, order):
+        C, H, W = tensor.shape
+        p = FRAG_SIZE
+        pieces = [tensor[:, i:i+p, j:j+p] for i in range(0, H, p) for j in range(0, W, p)]
+        grid = [pieces[idx] for idx in order]
+        rows = [torch.cat(grid[i:i+3], dim=2) for i in range(0, 9, 3)]
+        return torch.cat(rows, dim=1)
+    
+    reconstructed = unshuffle(img_tensor[0].cpu(), pred_order)
+    
+    # Convert to image
+    result_img = transforms.ToPILImage()(reconstructed)
+    buffered = io.BytesIO()
+    result_img.save(buffered, format="PNG")
+    solution_image = base64.b64encode(buffered.getvalue()).decode("utf-8")
+    
+    # Calculate metrics
+    if indices:
+        patch_matches = sum(1 for i, j in zip(pred_order, indices) if i == j)
+        patch_accuracy = patch_matches / NUM_FRAG
+        puzzle_correct = patch_matches == NUM_FRAG
+    else:
+        patch_matches = 0
+        patch_accuracy = 0
+        puzzle_correct = False
+    
+    # Return similar format to your existing API
+    return {
+        "success": True,
+        "solution_image": solution_image,
+        "metrics": {
+            "patch_matches": patch_matches,
+            "total_patches": NUM_FRAG,
+            "patch_accuracy": patch_accuracy,
+            "puzzle_correct": puzzle_correct
+        },
+        "image_info": {
+            "grid_size": "3x3",
+            "image_resolution": f"{PUZZLE_SIZE}x{PUZZLE_SIZE}",
+            "patch_size": f"{FRAG_SIZE}x{FRAG_SIZE}"
+        },
+        "processing_time": "1.0"  # Placeholder, you could add actual timing
+    }
 
 # Serve static files for frontend
 app.mount("/", StaticFiles(directory="api/static", html=True), name="static")
