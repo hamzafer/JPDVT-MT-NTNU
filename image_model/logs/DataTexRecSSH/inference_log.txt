@@ -1,0 +1,117 @@
+2025-05-21 20:00:50,963 [INFO] ============================================
+2025-05-21 20:00:50,964 [INFO] Starting Jigsaw Puzzle Inference Script with Resume
+2025-05-21 20:00:50,968 [INFO] Loading model [JPDVT] from checkpoint: /cluster/home/muhamhz/JPDVT/image_model/models/3x3_Full/2850000.pt
+2025-05-21 20:00:54,921 [INFO] Model and diffusion initialized.
+2025-05-21 20:00:54,921 [INFO] Reading images from: /cluster/home/muhamhz/data/DataTexRecSSH/Downsampled1
+2025-05-21 20:00:54,923 [INFO] Found 27 images in Downsampled1 (masks excluded).
+2025-05-21 20:00:54,923 [INFO] Resume info: 0 images already processed.
+2025-05-21 20:00:54,923 [INFO] Processing 1/27: resized_001.png
+2025-05-21 20:01:00,706 [INFO]    PuzzleAcc=0 PatchAcc=0.56 (Running puzzleAcc=0.00, patchAcc=0.56) | Time=5.78s
+2025-05-21 20:01:00,707 [INFO] Processing 2/27: resized_008-1.png
+2025-05-21 20:01:05,753 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.00, patchAcc=0.28) | Time=5.05s
+2025-05-21 20:01:05,754 [INFO] Processing 3/27: resized_008.png
+2025-05-21 20:01:09,862 [INFO]    PuzzleAcc=0 PatchAcc=0.22 (Running puzzleAcc=0.00, patchAcc=0.26) | Time=4.11s
+2025-05-21 20:01:09,863 [INFO] Processing 4/27: resized_010.png
+2025-05-21 20:01:14,447 [INFO]    PuzzleAcc=1 PatchAcc=1.00 (Running puzzleAcc=0.25, patchAcc=0.44) | Time=4.58s
+2025-05-21 20:01:14,447 [INFO] Processing 5/27: resized_012.png
+2025-05-21 20:01:18,346 [INFO]    PuzzleAcc=1 PatchAcc=1.00 (Running puzzleAcc=0.40, patchAcc=0.56) | Time=3.90s
+2025-05-21 20:01:18,347 [INFO] Processing 6/27: resized_016.png
+2025-05-21 20:01:22,484 [INFO]    PuzzleAcc=0 PatchAcc=0.22 (Running puzzleAcc=0.33, patchAcc=0.50) | Time=4.14s
+2025-05-21 20:01:22,485 [INFO] Processing 7/27: resized_029.png
+2025-05-21 20:01:27,801 [INFO]    PuzzleAcc=0 PatchAcc=0.78 (Running puzzleAcc=0.29, patchAcc=0.54) | Time=5.32s
+2025-05-21 20:01:27,802 [INFO] Processing 8/27: resized_053.png
+2025-05-21 20:01:31,617 [INFO]    PuzzleAcc=1 PatchAcc=1.00 (Running puzzleAcc=0.38, patchAcc=0.60) | Time=3.82s
+2025-05-21 20:01:31,619 [INFO] Processing 9/27: resized_055-1.png
+2025-05-21 20:01:35,902 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.33, patchAcc=0.54) | Time=4.28s
+2025-05-21 20:01:35,903 [INFO] Processing 10/27: resized_055-2.png
+2025-05-21 20:01:39,946 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.30, patchAcc=0.50) | Time=4.04s
+2025-05-21 20:01:39,946 [INFO] Processing 11/27: resized_056.png
+2025-05-21 20:01:43,776 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.27, patchAcc=0.46) | Time=3.83s
+2025-05-21 20:01:43,777 [INFO] Processing 12/27: resized_057.png
+2025-05-21 20:01:48,283 [INFO]    PuzzleAcc=1 PatchAcc=1.00 (Running puzzleAcc=0.33, patchAcc=0.51) | Time=4.51s
+2025-05-21 20:01:48,284 [INFO] Processing 13/27: resized_066.png
+2025-05-21 20:01:52,641 [INFO]    PuzzleAcc=1 PatchAcc=1.00 (Running puzzleAcc=0.38, patchAcc=0.55) | Time=4.36s
+2025-05-21 20:01:52,642 [INFO] Processing 14/27: resized_067.png
+2025-05-21 20:01:56,194 [INFO]    PuzzleAcc=0 PatchAcc=0.44 (Running puzzleAcc=0.36, patchAcc=0.54) | Time=3.55s
+2025-05-21 20:01:56,195 [INFO] Processing 15/27: resized_068.png
+2025-05-21 20:01:59,671 [INFO]    PuzzleAcc=0 PatchAcc=0.78 (Running puzzleAcc=0.33, patchAcc=0.56) | Time=3.48s
+2025-05-21 20:01:59,672 [INFO] Processing 16/27: resized_071.png
+2025-05-21 20:02:03,403 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.31, patchAcc=0.52) | Time=3.73s
+2025-05-21 20:02:03,404 [INFO] Processing 17/27: resized_072.png
+2025-05-21 20:02:07,699 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.29, patchAcc=0.49) | Time=4.29s
+2025-05-21 20:02:07,700 [INFO] Processing 18/27: resized_082.png
+2025-05-21 20:02:12,018 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.28, patchAcc=0.46) | Time=4.32s
+2025-05-21 20:02:12,019 [INFO] Processing 19/27: resized_083.png
+2025-05-21 20:02:15,591 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.26, patchAcc=0.44) | Time=3.57s
+2025-05-21 20:02:15,592 [INFO] Processing 20/27: resized_086.png
+2025-05-21 20:02:19,440 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.25, patchAcc=0.42) | Time=3.85s
+2025-05-21 20:02:19,441 [INFO] Processing 21/27: resized_087.png
+2025-05-21 20:02:23,026 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.24, patchAcc=0.40) | Time=3.58s
+2025-05-21 20:02:23,027 [INFO] Processing 22/27: resized_088.png
+2025-05-21 20:02:28,375 [INFO]    PuzzleAcc=0 PatchAcc=0.56 (Running puzzleAcc=0.23, patchAcc=0.41) | Time=5.35s
+2025-05-21 20:02:28,376 [INFO] Processing 23/27: resized_090.png
+2025-05-21 20:02:33,674 [INFO]    PuzzleAcc=1 PatchAcc=1.00 (Running puzzleAcc=0.26, patchAcc=0.43) | Time=5.30s
+2025-05-21 20:02:33,675 [INFO] Processing 24/27: resized_102.png
+2025-05-21 20:02:39,200 [INFO]    PuzzleAcc=1 PatchAcc=1.00 (Running puzzleAcc=0.29, patchAcc=0.46) | Time=5.53s
+2025-05-21 20:02:39,201 [INFO] Processing 25/27: resized_103.png
+2025-05-21 20:02:44,555 [INFO]    PuzzleAcc=0 PatchAcc=0.67 (Running puzzleAcc=0.28, patchAcc=0.47) | Time=5.35s
+2025-05-21 20:02:44,556 [INFO] Processing 26/27: resized_104.png
+2025-05-21 20:02:49,902 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.27, patchAcc=0.45) | Time=5.35s
+2025-05-21 20:02:49,903 [INFO] Processing 27/27: resized_131.png
+2025-05-21 20:02:55,409 [INFO]    PuzzleAcc=1 PatchAcc=1.00 (Running puzzleAcc=0.30, patchAcc=0.47) | Time=5.51s
+2025-05-21 20:02:55,410 [INFO] ============================================
+2025-05-21 20:02:55,410 [INFO] Done with Downsampled1. Processed 27 images (including resumed ones).
+2025-05-21 20:02:55,410 [INFO] Puzzle Accuracy: 0.2963
+2025-05-21 20:02:55,410 [INFO] Patch Accuracy: 0.4691
+2025-05-21 20:02:55,411 [INFO] Total inference time: 120.49s
+2025-05-21 20:02:55,411 [INFO] ============================================
+2025-05-21 20:02:55,411 [INFO] Reading images from: /cluster/home/muhamhz/data/DataTexRecSSH/Downsampled2
+2025-05-21 20:02:55,411 [INFO] Found 18 images in Downsampled2 (masks excluded).
+2025-05-21 20:02:55,412 [INFO] Resume info: 0 images already processed.
+2025-05-21 20:02:55,412 [INFO] Processing 1/18: resized_002.png
+2025-05-21 20:02:59,924 [INFO]    PuzzleAcc=0 PatchAcc=0.44 (Running puzzleAcc=0.00, patchAcc=0.44) | Time=4.51s
+2025-05-21 20:02:59,997 [INFO] Processing 2/18: resized_003.png
+2025-05-21 20:03:04,487 [INFO]    PuzzleAcc=0 PatchAcc=0.56 (Running puzzleAcc=0.00, patchAcc=0.50) | Time=4.49s
+2025-05-21 20:03:04,488 [INFO] Processing 3/18: resized_004-1.png
+2025-05-21 20:03:09,189 [INFO]    PuzzleAcc=0 PatchAcc=0.67 (Running puzzleAcc=0.00, patchAcc=0.56) | Time=4.70s
+2025-05-21 20:03:09,190 [INFO] Processing 4/18: resized_004-2.png
+2025-05-21 20:03:13,797 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.00, patchAcc=0.44) | Time=4.61s
+2025-05-21 20:03:13,797 [INFO] Processing 5/18: resized_004-3.png
+2025-05-21 20:03:18,403 [INFO]    PuzzleAcc=0 PatchAcc=0.22 (Running puzzleAcc=0.00, patchAcc=0.40) | Time=4.61s
+2025-05-21 20:03:18,404 [INFO] Processing 6/18: resized_005.png
+2025-05-21 20:03:22,382 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.00, patchAcc=0.33) | Time=3.98s
+2025-05-21 20:03:22,383 [INFO] Processing 7/18: resized_006.png
+2025-05-21 20:03:27,881 [INFO]    PuzzleAcc=0 PatchAcc=0.67 (Running puzzleAcc=0.00, patchAcc=0.38) | Time=5.50s
+2025-05-21 20:03:27,882 [INFO] Processing 8/18: resized_007.png
+2025-05-21 20:03:33,180 [INFO]    PuzzleAcc=1 PatchAcc=1.00 (Running puzzleAcc=0.12, patchAcc=0.46) | Time=5.30s
+2025-05-21 20:03:33,181 [INFO] Processing 9/18: resized_013.png
+2025-05-21 20:03:37,739 [INFO]    PuzzleAcc=1 PatchAcc=1.00 (Running puzzleAcc=0.22, patchAcc=0.52) | Time=4.56s
+2025-05-21 20:03:37,740 [INFO] Processing 10/18: resized_030.png
+2025-05-21 20:03:43,011 [INFO]    PuzzleAcc=0 PatchAcc=0.22 (Running puzzleAcc=0.20, patchAcc=0.49) | Time=5.27s
+2025-05-21 20:03:43,012 [INFO] Processing 11/18: resized_073.png
+2025-05-21 20:03:46,716 [INFO]    PuzzleAcc=0 PatchAcc=0.22 (Running puzzleAcc=0.18, patchAcc=0.46) | Time=3.70s
+2025-05-21 20:03:46,717 [INFO] Processing 12/18: resized_095.png
+2025-05-21 20:03:51,218 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.17, patchAcc=0.44) | Time=4.50s
+2025-05-21 20:03:51,219 [INFO] Processing 13/18: resized_097.png
+2025-05-21 20:03:55,808 [INFO]    PuzzleAcc=0 PatchAcc=0.33 (Running puzzleAcc=0.15, patchAcc=0.43) | Time=4.59s
+2025-05-21 20:03:55,809 [INFO] Processing 14/18: resized_111.png
+2025-05-21 20:04:00,544 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.14, patchAcc=0.40) | Time=4.74s
+2025-05-21 20:04:00,546 [INFO] Processing 15/18: resized_123.png
+2025-05-21 20:04:04,248 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.13, patchAcc=0.38) | Time=3.70s
+2025-05-21 20:04:04,249 [INFO] Processing 16/18: resized_124-1.png
+2025-05-21 20:04:07,720 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.12, patchAcc=0.35) | Time=3.47s
+2025-05-21 20:04:07,721 [INFO] Processing 17/18: resized_124-2.png
+2025-05-21 20:04:11,200 [INFO]    PuzzleAcc=1 PatchAcc=1.00 (Running puzzleAcc=0.18, patchAcc=0.39) | Time=3.48s
+2025-05-21 20:04:11,201 [INFO] Processing 18/18: resized_130.png
+2025-05-21 20:04:14,607 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.17, patchAcc=0.37) | Time=3.41s
+2025-05-21 20:04:14,608 [INFO] ============================================
+2025-05-21 20:04:14,608 [INFO] Done with Downsampled2. Processed 18 images (including resumed ones).
+2025-05-21 20:04:14,609 [INFO] Puzzle Accuracy: 0.1667
+2025-05-21 20:04:14,609 [INFO] Patch Accuracy: 0.3704
+2025-05-21 20:04:14,609 [INFO] Total inference time: 79.20s
+2025-05-21 20:04:14,609 [INFO] ============================================
+2025-05-21 20:04:14,609 [INFO] ============================================
+2025-05-21 20:04:14,609 [INFO] OVERALL RESULTS:
+2025-05-21 20:04:14,609 [INFO] Downsampled1: Puzzle Acc = 0.2963, Patch Acc = 0.4691, Images = 27
+2025-05-21 20:04:14,609 [INFO] Downsampled2: Puzzle Acc = 0.1667, Patch Acc = 0.3704, Images = 18
+2025-05-21 20:04:14,609 [INFO] ============================================
