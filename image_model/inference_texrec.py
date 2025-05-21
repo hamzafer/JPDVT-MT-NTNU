@@ -236,14 +236,18 @@ def main():
         dir_path = os.path.join(DATA_DIR, directory)
         logging.info(f"Reading images from: {dir_path}")
         
-        # Build list of all valid images
+        # Build list of all valid images (excluding mask images)
         image_paths = []
         for ext in ALLOWED_EXTENSIONS:
             pattern = os.path.join(dir_path, f'*{ext}')
-            image_paths.extend(glob.glob(pattern))
+            # Get all matching files
+            all_files = glob.glob(pattern)
+            # Filter out any files with 'mask' in the name
+            valid_files = [f for f in all_files if 'mask' not in os.path.basename(f).lower()]
+            image_paths.extend(valid_files)
         image_paths = sorted(image_paths)
         
-        logging.info(f"Found {len(image_paths)} images in {directory}.")
+        logging.info(f"Found {len(image_paths)} images in {directory} (masks excluded).")
         
         # Resume logic: load existing progress, if any
         progress_csv_path = os.path.join(LOGS_DIR, f"{directory}_{PROGRESS_CSV}")
