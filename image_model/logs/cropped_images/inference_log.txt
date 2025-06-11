@@ -1,0 +1,479 @@
+2025-06-11 12:29:15,807 [INFO] ============================================
+2025-06-11 12:29:15,809 [INFO] Starting Jigsaw Puzzle Inference Script with Resume
+2025-06-11 12:29:15,813 [INFO] Loading model [JPDVT] from checkpoint: /cluster/home/muhamhz/JPDVT/image_model/models/3x3_Full/2850000.pt
+2025-06-11 12:29:21,711 [INFO] Model and diffusion initialized.
+2025-06-11 12:29:21,711 [INFO] Reading images from: /cluster/home/muhamhz/data/DataTexRecSSH/cropped_images/Downsampled1
+2025-06-11 12:29:21,712 [INFO] Found 0 images in Downsampled1 (masks excluded).
+2025-06-11 12:29:21,712 [INFO] Resume info: 0 images already processed.
+2025-06-11 12:29:21,712 [INFO] ============================================
+2025-06-11 12:29:21,713 [INFO] Done with Downsampled1. Processed 0 images (including resumed ones).
+2025-06-11 12:29:21,713 [INFO] Puzzle Accuracy: 0.0000
+2025-06-11 12:29:21,713 [INFO] Patch Accuracy: 0.0000
+2025-06-11 12:29:21,713 [INFO] Total inference time: 0.00s
+2025-06-11 12:29:21,713 [INFO] ============================================
+2025-06-11 12:29:21,713 [INFO] Reading images from: /cluster/home/muhamhz/data/DataTexRecSSH/cropped_images/Downsampled2
+2025-06-11 12:29:21,713 [INFO] Found 0 images in Downsampled2 (masks excluded).
+2025-06-11 12:29:21,714 [INFO] Resume info: 0 images already processed.
+2025-06-11 12:29:21,714 [INFO] ============================================
+2025-06-11 12:29:21,714 [INFO] Done with Downsampled2. Processed 0 images (including resumed ones).
+2025-06-11 12:29:21,714 [INFO] Puzzle Accuracy: 0.0000
+2025-06-11 12:29:21,714 [INFO] Patch Accuracy: 0.0000
+2025-06-11 12:29:21,714 [INFO] Total inference time: 0.00s
+2025-06-11 12:29:21,714 [INFO] ============================================
+2025-06-11 12:29:21,714 [INFO] ============================================
+2025-06-11 12:29:21,714 [INFO] OVERALL RESULTS:
+2025-06-11 12:29:21,714 [INFO] Downsampled1: Puzzle Acc = 0.0000, Patch Acc = 0.0000, Images = 0
+2025-06-11 12:29:21,714 [INFO] Downsampled2: Puzzle Acc = 0.0000, Patch Acc = 0.0000, Images = 0
+2025-06-11 12:29:21,714 [INFO] ============================================
+2025-06-11 12:29:49,629 [INFO] ============================================
+2025-06-11 12:29:49,630 [INFO] Starting Jigsaw Puzzle Inference Script with Resume
+2025-06-11 12:29:49,633 [INFO] Loading model [JPDVT] from checkpoint: /cluster/home/muhamhz/JPDVT/image_model/models/3x3_Full/2850000.pt
+2025-06-11 12:29:55,354 [INFO] Model and diffusion initialized.
+2025-06-11 12:29:55,355 [INFO] Reading images from: /cluster/home/muhamhz/data/DataTexRecSSH/cropped_images/Downsampled1
+2025-06-11 12:29:55,356 [INFO] Found 0 images in Downsampled1 (masks excluded).
+2025-06-11 12:29:55,356 [INFO] Resume info: 0 images already processed.
+2025-06-11 12:29:55,356 [INFO] ============================================
+2025-06-11 12:29:55,356 [INFO] Done with Downsampled1. Processed 0 images (including resumed ones).
+2025-06-11 12:29:55,357 [INFO] Puzzle Accuracy: 0.0000
+2025-06-11 12:29:55,357 [INFO] Patch Accuracy: 0.0000
+2025-06-11 12:29:55,357 [INFO] Total inference time: 0.00s
+2025-06-11 12:29:55,357 [INFO] ============================================
+2025-06-11 12:29:55,357 [INFO] Reading images from: /cluster/home/muhamhz/data/DataTexRecSSH/cropped_images/Downsampled2
+2025-06-11 12:29:55,357 [INFO] Found 0 images in Downsampled2 (masks excluded).
+2025-06-11 12:29:55,357 [INFO] Resume info: 0 images already processed.
+2025-06-11 12:29:55,358 [INFO] ============================================
+2025-06-11 12:29:55,358 [INFO] Done with Downsampled2. Processed 0 images (including resumed ones).
+2025-06-11 12:29:55,358 [INFO] Puzzle Accuracy: 0.0000
+2025-06-11 12:29:55,358 [INFO] Patch Accuracy: 0.0000
+2025-06-11 12:29:55,358 [INFO] Total inference time: 0.00s
+2025-06-11 12:29:55,358 [INFO] ============================================
+2025-06-11 12:29:55,358 [INFO] ============================================
+2025-06-11 12:29:55,358 [INFO] OVERALL RESULTS:
+2025-06-11 12:29:55,358 [INFO] Downsampled1: Puzzle Acc = 0.0000, Patch Acc = 0.0000, Images = 0
+2025-06-11 12:29:55,358 [INFO] Downsampled2: Puzzle Acc = 0.0000, Patch Acc = 0.0000, Images = 0
+2025-06-11 12:29:55,358 [INFO] ============================================
+2025-06-11 12:31:45,279 [INFO] ============================================
+2025-06-11 12:31:45,279 [INFO] Starting Jigsaw Puzzle Inference Script with Resume
+2025-06-11 12:31:45,284 [INFO] Loading model [JPDVT] from checkpoint: /cluster/home/muhamhz/JPDVT/image_model/models/3x3_Full/2850000.pt
+2025-06-11 12:31:51,034 [INFO] Model and diffusion initialized.
+2025-06-11 12:31:51,034 [INFO] Reading images from: /cluster/home/muhamhz/data/DataTexRecSSH/cropped_images
+2025-06-11 12:31:51,037 [INFO] Found 206 images in /cluster/home/muhamhz/data/DataTexRecSSH/cropped_images (masks excluded).
+2025-06-11 12:31:51,037 [INFO] Resume info: 0 images already processed.
+2025-06-11 12:31:51,038 [INFO] Processing 1/206: img_002_(a)_img_002.png
+2025-06-11 12:32:03,427 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.00, patchAcc=0.11) | Time=12.39s
+2025-06-11 12:32:03,429 [INFO] Processing 2/206: img_002_(b)_img_002.png
+2025-06-11 12:32:08,364 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.00, patchAcc=0.11) | Time=4.93s
+2025-06-11 12:32:08,365 [INFO] Processing 3/206: img_002_(c)_img_002.png
+2025-06-11 12:32:13,342 [INFO]    PuzzleAcc=0 PatchAcc=0.56 (Running puzzleAcc=0.00, patchAcc=0.26) | Time=4.98s
+2025-06-11 12:32:13,343 [INFO] Processing 4/206: img_002_(d)_img_002.png
+2025-06-11 12:32:18,136 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.00, patchAcc=0.19) | Time=4.79s
+2025-06-11 12:32:18,136 [INFO] Processing 5/206: img_002_(e)_img_002.png
+2025-06-11 12:32:21,890 [INFO]    PuzzleAcc=0 PatchAcc=0.33 (Running puzzleAcc=0.00, patchAcc=0.22) | Time=3.75s
+2025-06-11 12:32:21,891 [INFO] Processing 6/206: img_002_(f)_img_002.png
+2025-06-11 12:32:25,557 [INFO]    PuzzleAcc=0 PatchAcc=0.44 (Running puzzleAcc=0.00, patchAcc=0.26) | Time=3.67s
+2025-06-11 12:32:25,558 [INFO] Processing 7/206: img_002_(g)_img_002.png
+2025-06-11 12:32:29,326 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.00, patchAcc=0.24) | Time=3.77s
+2025-06-11 12:32:29,327 [INFO] Processing 8/206: img_002_(h)_img_002.png
+2025-06-11 12:32:33,103 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.00, patchAcc=0.21) | Time=3.78s
+2025-06-11 12:32:33,104 [INFO] Processing 9/206: img_002_(i)_img_002.png
+2025-06-11 12:32:36,974 [INFO]    PuzzleAcc=0 PatchAcc=0.33 (Running puzzleAcc=0.00, patchAcc=0.22) | Time=3.87s
+2025-06-11 12:32:36,975 [INFO] Processing 10/206: img_002_(j)_img_002.png
+2025-06-11 12:32:40,839 [INFO]    PuzzleAcc=1 PatchAcc=1.00 (Running puzzleAcc=0.10, patchAcc=0.30) | Time=3.86s
+2025-06-11 12:32:40,839 [INFO] Processing 11/206: img_002_(k)_img_002.png
+2025-06-11 12:32:44,518 [INFO]    PuzzleAcc=0 PatchAcc=0.44 (Running puzzleAcc=0.09, patchAcc=0.31) | Time=3.68s
+2025-06-11 12:32:44,519 [INFO] Processing 12/206: img_002_(l)_img_002.png
+2025-06-11 12:32:48,251 [INFO]    PuzzleAcc=0 PatchAcc=0.44 (Running puzzleAcc=0.08, patchAcc=0.32) | Time=3.73s
+2025-06-11 12:32:48,252 [INFO] Processing 13/206: img_002_(m)_img_002.png
+2025-06-11 12:32:51,936 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.08, patchAcc=0.30) | Time=3.68s
+2025-06-11 12:32:51,937 [INFO] Processing 14/206: img_002_(n)_img_002.png
+2025-06-11 12:32:55,623 [INFO]    PuzzleAcc=0 PatchAcc=0.22 (Running puzzleAcc=0.07, patchAcc=0.29) | Time=3.69s
+2025-06-11 12:32:55,624 [INFO] Processing 15/206: img_002_(o)_img_002.png
+2025-06-11 12:32:59,304 [INFO]    PuzzleAcc=1 PatchAcc=1.00 (Running puzzleAcc=0.13, patchAcc=0.34) | Time=3.68s
+2025-06-11 12:32:59,305 [INFO] Processing 16/206: img_003_(a)_img_003.png
+2025-06-11 12:33:03,222 [INFO]    PuzzleAcc=0 PatchAcc=0.22 (Running puzzleAcc=0.12, patchAcc=0.33) | Time=3.92s
+2025-06-11 12:33:03,223 [INFO] Processing 17/206: img_003_(b)_img_003.png
+2025-06-11 12:33:07,054 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.12, patchAcc=0.31) | Time=3.83s
+2025-06-11 12:33:07,055 [INFO] Processing 18/206: img_003_(c)_img_003.png
+2025-06-11 12:33:11,273 [INFO]    PuzzleAcc=0 PatchAcc=0.44 (Running puzzleAcc=0.11, patchAcc=0.32) | Time=4.22s
+2025-06-11 12:33:11,274 [INFO] Processing 19/206: img_003_(d)_img_003.png
+2025-06-11 12:33:15,036 [INFO]    PuzzleAcc=0 PatchAcc=0.33 (Running puzzleAcc=0.11, patchAcc=0.32) | Time=3.76s
+2025-06-11 12:33:15,037 [INFO] Processing 20/206: img_003_(e)_img_003.png
+2025-06-11 12:33:18,825 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.10, patchAcc=0.31) | Time=3.79s
+2025-06-11 12:33:18,826 [INFO] Processing 21/206: img_003_(f)_img_003.png
+2025-06-11 12:33:22,832 [INFO]    PuzzleAcc=0 PatchAcc=0.78 (Running puzzleAcc=0.10, patchAcc=0.33) | Time=4.01s
+2025-06-11 12:33:22,833 [INFO] Processing 22/206: img_003_(g)_img_003.png
+2025-06-11 12:33:26,576 [INFO]    PuzzleAcc=0 PatchAcc=0.33 (Running puzzleAcc=0.09, patchAcc=0.33) | Time=3.74s
+2025-06-11 12:33:26,577 [INFO] Processing 23/206: img_003_(h)_img_003.png
+2025-06-11 12:33:30,329 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.09, patchAcc=0.32) | Time=3.75s
+2025-06-11 12:33:30,330 [INFO] Processing 24/206: img_003_(i)_img_003.png
+2025-06-11 12:33:34,110 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.08, patchAcc=0.31) | Time=3.78s
+2025-06-11 12:33:34,111 [INFO] Processing 25/206: img_003_(j)_img_003.png
+2025-06-11 12:33:38,331 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.08, patchAcc=0.30) | Time=4.22s
+2025-06-11 12:33:38,332 [INFO] Processing 26/206: img_003_(k)_img_003.png
+2025-06-11 12:33:42,600 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.08, patchAcc=0.29) | Time=4.27s
+2025-06-11 12:33:42,601 [INFO] Processing 27/206: img_003_(l)_img_003.png
+2025-06-11 12:33:46,540 [INFO]    PuzzleAcc=1 PatchAcc=1.00 (Running puzzleAcc=0.11, patchAcc=0.31) | Time=3.94s
+2025-06-11 12:33:46,541 [INFO] Processing 28/206: img_003_(m)_img_003.png
+2025-06-11 12:33:50,284 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.11, patchAcc=0.30) | Time=3.74s
+2025-06-11 12:33:50,285 [INFO] Processing 29/206: img_003_(n)_img_003.png
+2025-06-11 12:33:54,044 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.10, patchAcc=0.29) | Time=3.76s
+2025-06-11 12:33:54,046 [INFO] Processing 30/206: img_004_1_(a)_img_004_1.png
+2025-06-11 12:33:57,849 [INFO]    PuzzleAcc=0 PatchAcc=0.56 (Running puzzleAcc=0.10, patchAcc=0.30) | Time=3.80s
+2025-06-11 12:33:57,850 [INFO] Processing 31/206: img_004_1_(b)_img_004_1.png
+2025-06-11 12:34:01,921 [INFO]    PuzzleAcc=0 PatchAcc=0.44 (Running puzzleAcc=0.10, patchAcc=0.30) | Time=4.07s
+2025-06-11 12:34:01,922 [INFO] Processing 32/206: img_004_1_(c)_img_004_1.png
+2025-06-11 12:34:06,084 [INFO]    PuzzleAcc=0 PatchAcc=0.56 (Running puzzleAcc=0.09, patchAcc=0.31) | Time=4.16s
+2025-06-11 12:34:06,086 [INFO] Processing 33/206: img_004_1_(d)_img_004_1.png
+2025-06-11 12:34:10,245 [INFO]    PuzzleAcc=0 PatchAcc=0.56 (Running puzzleAcc=0.09, patchAcc=0.32) | Time=4.16s
+2025-06-11 12:34:10,246 [INFO] Processing 34/206: img_004_1_(e)_img_004_1.png
+2025-06-11 12:34:13,960 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.09, patchAcc=0.31) | Time=3.71s
+2025-06-11 12:34:13,961 [INFO] Processing 35/206: img_004_1_(f)_img_004_1.png
+2025-06-11 12:34:17,739 [INFO]    PuzzleAcc=0 PatchAcc=0.44 (Running puzzleAcc=0.09, patchAcc=0.31) | Time=3.78s
+2025-06-11 12:34:17,740 [INFO] Processing 36/206: img_004_1_(g)_img_004_1.png
+2025-06-11 12:34:21,486 [INFO]    PuzzleAcc=1 PatchAcc=1.00 (Running puzzleAcc=0.11, patchAcc=0.33) | Time=3.75s
+2025-06-11 12:34:21,487 [INFO] Processing 37/206: img_004_1_(h)_img_004_1.png
+2025-06-11 12:34:25,251 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.11, patchAcc=0.33) | Time=3.76s
+2025-06-11 12:34:25,252 [INFO] Processing 38/206: img_004_1_(i)_img_004_1.png
+2025-06-11 12:34:29,078 [INFO]    PuzzleAcc=1 PatchAcc=1.00 (Running puzzleAcc=0.13, patchAcc=0.35) | Time=3.83s
+2025-06-11 12:34:29,079 [INFO] Processing 39/206: img_004_2_(a)_img_004_2.png
+2025-06-11 12:34:32,862 [INFO]    PuzzleAcc=0 PatchAcc=0.33 (Running puzzleAcc=0.13, patchAcc=0.34) | Time=3.78s
+2025-06-11 12:34:32,863 [INFO] Processing 40/206: img_004_2_(b)_img_004_2.png
+2025-06-11 12:34:36,582 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.12, patchAcc=0.34) | Time=3.72s
+2025-06-11 12:34:36,583 [INFO] Processing 41/206: img_004_2_(c)_img_004_2.png
+2025-06-11 12:34:40,651 [INFO]    PuzzleAcc=0 PatchAcc=0.78 (Running puzzleAcc=0.12, patchAcc=0.35) | Time=4.07s
+2025-06-11 12:34:40,652 [INFO] Processing 42/206: img_004_2_(d)_img_004_2.png
+2025-06-11 12:34:44,459 [INFO]    PuzzleAcc=0 PatchAcc=0.44 (Running puzzleAcc=0.12, patchAcc=0.35) | Time=3.81s
+2025-06-11 12:34:44,460 [INFO] Processing 43/206: img_004_2_(e)_img_004_2.png
+2025-06-11 12:34:48,181 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.12, patchAcc=0.35) | Time=3.72s
+2025-06-11 12:34:48,182 [INFO] Processing 44/206: img_004_2_(f)_img_004_2.png
+2025-06-11 12:34:51,884 [INFO]    PuzzleAcc=1 PatchAcc=1.00 (Running puzzleAcc=0.14, patchAcc=0.36) | Time=3.70s
+2025-06-11 12:34:51,885 [INFO] Processing 45/206: img_004_2_(g)_img_004_2.png
+2025-06-11 12:34:55,612 [INFO]    PuzzleAcc=0 PatchAcc=0.44 (Running puzzleAcc=0.13, patchAcc=0.36) | Time=3.73s
+2025-06-11 12:34:55,613 [INFO] Processing 46/206: img_004_2_(h)_img_004_2.png
+2025-06-11 12:34:59,400 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.13, patchAcc=0.36) | Time=3.79s
+2025-06-11 12:34:59,402 [INFO] Processing 47/206: img_004_2_(i)_img_004_2.png
+2025-06-11 12:35:03,152 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.13, patchAcc=0.35) | Time=3.75s
+2025-06-11 12:35:03,153 [INFO] Processing 48/206: img_004_3_(a)_img_004_3.png
+2025-06-11 12:35:06,886 [INFO]    PuzzleAcc=1 PatchAcc=1.00 (Running puzzleAcc=0.15, patchAcc=0.36) | Time=3.73s
+2025-06-11 12:35:06,887 [INFO] Processing 49/206: img_004_3_(b)_img_004_3.png
+2025-06-11 12:35:10,559 [INFO]    PuzzleAcc=1 PatchAcc=1.00 (Running puzzleAcc=0.16, patchAcc=0.38) | Time=3.67s
+2025-06-11 12:35:10,560 [INFO] Processing 50/206: img_004_3_(c)_img_004_3.png
+2025-06-11 12:35:14,319 [INFO]    PuzzleAcc=0 PatchAcc=0.22 (Running puzzleAcc=0.16, patchAcc=0.37) | Time=3.76s
+2025-06-11 12:35:14,320 [INFO] Processing 51/206: img_004_3_(d)_img_004_3.png
+2025-06-11 12:35:18,195 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.16, patchAcc=0.37) | Time=3.87s
+2025-06-11 12:35:18,196 [INFO] Processing 52/206: img_005_(a)_img_005.png
+2025-06-11 12:35:21,872 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.15, patchAcc=0.36) | Time=3.68s
+2025-06-11 12:35:21,873 [INFO] Processing 53/206: img_005_(b)_img_005.png
+2025-06-11 12:35:25,722 [INFO]    PuzzleAcc=1 PatchAcc=1.00 (Running puzzleAcc=0.17, patchAcc=0.37) | Time=3.85s
+2025-06-11 12:35:25,723 [INFO] Processing 54/206: img_013_(a)_img_013.png
+2025-06-11 12:35:29,592 [INFO]    PuzzleAcc=1 PatchAcc=1.00 (Running puzzleAcc=0.19, patchAcc=0.38) | Time=3.87s
+2025-06-11 12:35:29,593 [INFO] Processing 55/206: img_013_(b)_img_013.png
+2025-06-11 12:35:33,479 [INFO]    PuzzleAcc=0 PatchAcc=0.56 (Running puzzleAcc=0.18, patchAcc=0.39) | Time=3.89s
+2025-06-11 12:35:33,480 [INFO] Processing 56/206: img_013_(c)_img_013.png
+2025-06-11 12:35:37,426 [INFO]    PuzzleAcc=0 PatchAcc=0.67 (Running puzzleAcc=0.18, patchAcc=0.39) | Time=3.95s
+2025-06-11 12:35:37,427 [INFO] Processing 57/206: img_013_(d)_img_013.png
+2025-06-11 12:35:41,263 [INFO]    PuzzleAcc=0 PatchAcc=0.33 (Running puzzleAcc=0.18, patchAcc=0.39) | Time=3.84s
+2025-06-11 12:35:41,263 [INFO] Processing 58/206: img_013_(e)_img_013.png
+2025-06-11 12:35:45,167 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.17, patchAcc=0.39) | Time=3.90s
+2025-06-11 12:35:45,168 [INFO] Processing 59/206: img_013_(f)_img_013.png
+2025-06-11 12:35:49,049 [INFO]    PuzzleAcc=0 PatchAcc=0.44 (Running puzzleAcc=0.17, patchAcc=0.39) | Time=3.88s
+2025-06-11 12:35:49,050 [INFO] Processing 60/206: img_013_(g)_img_013.png
+2025-06-11 12:35:52,924 [INFO]    PuzzleAcc=0 PatchAcc=0.33 (Running puzzleAcc=0.17, patchAcc=0.39) | Time=3.87s
+2025-06-11 12:35:52,924 [INFO] Processing 61/206: img_053_(a)_img_053.png
+2025-06-11 12:35:56,859 [INFO]    PuzzleAcc=0 PatchAcc=0.67 (Running puzzleAcc=0.16, patchAcc=0.39) | Time=3.93s
+2025-06-11 12:35:56,860 [INFO] Processing 62/206: img_053_(b)_img_053.png
+2025-06-11 12:36:00,790 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.16, patchAcc=0.39) | Time=3.93s
+2025-06-11 12:36:00,791 [INFO] Processing 63/206: img_053_(c)_img_053.png
+2025-06-11 12:36:04,610 [INFO]    PuzzleAcc=0 PatchAcc=0.56 (Running puzzleAcc=0.16, patchAcc=0.39) | Time=3.82s
+2025-06-11 12:36:04,611 [INFO] Processing 64/206: img_053_(d)_img_053.png
+2025-06-11 12:36:09,385 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.16, patchAcc=0.38) | Time=4.77s
+2025-06-11 12:36:09,385 [INFO] Processing 65/206: img_055_1_(a)_img_055_1.png
+2025-06-11 12:36:14,173 [INFO]    PuzzleAcc=0 PatchAcc=0.44 (Running puzzleAcc=0.15, patchAcc=0.38) | Time=4.79s
+2025-06-11 12:36:14,174 [INFO] Processing 66/206: img_055_1_(b)_img_055_1.png
+2025-06-11 12:36:18,955 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.15, patchAcc=0.38) | Time=4.78s
+2025-06-11 12:36:18,957 [INFO] Processing 67/206: img_055_1_(c)_img_055_1.png
+2025-06-11 12:36:22,749 [INFO]    PuzzleAcc=0 PatchAcc=0.33 (Running puzzleAcc=0.15, patchAcc=0.38) | Time=3.79s
+2025-06-11 12:36:22,750 [INFO] Processing 68/206: img_055_1_(d)_img_055_1.png
+2025-06-11 12:36:27,554 [INFO]    PuzzleAcc=0 PatchAcc=0.78 (Running puzzleAcc=0.15, patchAcc=0.38) | Time=4.80s
+2025-06-11 12:36:27,555 [INFO] Processing 69/206: img_055_1_(e)_img_055_1.png
+2025-06-11 12:36:32,451 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.14, patchAcc=0.38) | Time=4.90s
+2025-06-11 12:36:32,453 [INFO] Processing 70/206: img_055_1_(f)_img_055_1.png
+2025-06-11 12:36:37,325 [INFO]    PuzzleAcc=0 PatchAcc=0.78 (Running puzzleAcc=0.14, patchAcc=0.39) | Time=4.87s
+2025-06-11 12:36:37,326 [INFO] Processing 71/206: img_055_1_(g)_img_055_1.png
+2025-06-11 12:36:42,160 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.14, patchAcc=0.38) | Time=4.83s
+2025-06-11 12:36:42,161 [INFO] Processing 72/206: img_055_1_(h)_img_055_1.png
+2025-06-11 12:36:47,053 [INFO]    PuzzleAcc=0 PatchAcc=0.22 (Running puzzleAcc=0.14, patchAcc=0.38) | Time=4.89s
+2025-06-11 12:36:47,054 [INFO] Processing 73/206: img_055_1_(i)_img_055_1.png
+2025-06-11 12:36:50,877 [INFO]    PuzzleAcc=0 PatchAcc=0.78 (Running puzzleAcc=0.14, patchAcc=0.39) | Time=3.82s
+2025-06-11 12:36:50,878 [INFO] Processing 74/206: img_055_1_(j)_img_055_1.png
+2025-06-11 12:36:54,676 [INFO]    PuzzleAcc=0 PatchAcc=0.22 (Running puzzleAcc=0.14, patchAcc=0.38) | Time=3.80s
+2025-06-11 12:36:54,677 [INFO] Processing 75/206: img_055_1_(k)_img_055_1.png
+2025-06-11 12:36:58,398 [INFO]    PuzzleAcc=0 PatchAcc=0.44 (Running puzzleAcc=0.13, patchAcc=0.38) | Time=3.72s
+2025-06-11 12:36:58,400 [INFO] Processing 76/206: img_056_(a)_img_056.png
+2025-06-11 12:37:02,268 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.13, patchAcc=0.38) | Time=3.87s
+2025-06-11 12:37:02,269 [INFO] Processing 77/206: img_056_(b)_img_056.png
+2025-06-11 12:37:06,274 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.13, patchAcc=0.38) | Time=4.01s
+2025-06-11 12:37:06,275 [INFO] Processing 78/206: img_056_(c)_img_056.png
+2025-06-11 12:37:10,026 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.13, patchAcc=0.37) | Time=3.75s
+2025-06-11 12:37:10,028 [INFO] Processing 79/206: img_056_(d)_img_056.png
+2025-06-11 12:37:13,896 [INFO]    PuzzleAcc=0 PatchAcc=0.56 (Running puzzleAcc=0.13, patchAcc=0.37) | Time=3.87s
+2025-06-11 12:37:13,897 [INFO] Processing 80/206: img_056_(e)_img_056.png
+2025-06-11 12:37:17,673 [INFO]    PuzzleAcc=0 PatchAcc=0.22 (Running puzzleAcc=0.12, patchAcc=0.37) | Time=3.78s
+2025-06-11 12:37:17,674 [INFO] Processing 81/206: img_067_(a)_img_067.png
+2025-06-11 12:37:21,411 [INFO]    PuzzleAcc=0 PatchAcc=0.22 (Running puzzleAcc=0.12, patchAcc=0.37) | Time=3.74s
+2025-06-11 12:37:21,412 [INFO] Processing 82/206: img_067_(b)_img_067.png
+2025-06-11 12:37:25,135 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.12, patchAcc=0.37) | Time=3.72s
+2025-06-11 12:37:25,136 [INFO] Processing 83/206: img_067_(c)_img_067.png
+2025-06-11 12:37:28,847 [INFO]    PuzzleAcc=0 PatchAcc=0.44 (Running puzzleAcc=0.12, patchAcc=0.37) | Time=3.71s
+2025-06-11 12:37:28,848 [INFO] Processing 84/206: img_067_(d)_img_067.png
+2025-06-11 12:37:32,572 [INFO]    PuzzleAcc=0 PatchAcc=0.33 (Running puzzleAcc=0.12, patchAcc=0.37) | Time=3.72s
+2025-06-11 12:37:32,573 [INFO] Processing 85/206: img_067_(e)_img_067.png
+2025-06-11 12:37:36,254 [INFO]    PuzzleAcc=1 PatchAcc=1.00 (Running puzzleAcc=0.13, patchAcc=0.37) | Time=3.68s
+2025-06-11 12:37:36,255 [INFO] Processing 86/206: img_067_(f)_img_067.png
+2025-06-11 12:37:39,980 [INFO]    PuzzleAcc=0 PatchAcc=0.22 (Running puzzleAcc=0.13, patchAcc=0.37) | Time=3.73s
+2025-06-11 12:37:39,981 [INFO] Processing 87/206: img_067_(g)_img_067.png
+2025-06-11 12:37:43,870 [INFO]    PuzzleAcc=0 PatchAcc=0.33 (Running puzzleAcc=0.13, patchAcc=0.37) | Time=3.89s
+2025-06-11 12:37:43,871 [INFO] Processing 88/206: img_067_(h)_img_067.png
+2025-06-11 12:37:47,864 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.12, patchAcc=0.37) | Time=3.99s
+2025-06-11 12:37:47,866 [INFO] Processing 89/206: img_067_(i)_img_067.png
+2025-06-11 12:37:51,684 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.12, patchAcc=0.36) | Time=3.82s
+2025-06-11 12:37:51,685 [INFO] Processing 90/206: img_067_(j)_img_067.png
+2025-06-11 12:37:55,546 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.12, patchAcc=0.36) | Time=3.86s
+2025-06-11 12:37:55,547 [INFO] Processing 91/206: img_067_(k)_img_067.png
+2025-06-11 12:37:59,272 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.12, patchAcc=0.36) | Time=3.72s
+2025-06-11 12:37:59,273 [INFO] Processing 92/206: img_067_(l)_img_067.png
+2025-06-11 12:38:03,055 [INFO]    PuzzleAcc=0 PatchAcc=0.22 (Running puzzleAcc=0.12, patchAcc=0.36) | Time=3.78s
+2025-06-11 12:38:03,056 [INFO] Processing 93/206: img_067_(m)_img_067.png
+2025-06-11 12:38:06,906 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.12, patchAcc=0.35) | Time=3.85s
+2025-06-11 12:38:06,907 [INFO] Processing 94/206: img_067_(n)_img_067.png
+2025-06-11 12:38:10,626 [INFO]    PuzzleAcc=0 PatchAcc=0.56 (Running puzzleAcc=0.12, patchAcc=0.35) | Time=3.72s
+2025-06-11 12:38:10,627 [INFO] Processing 95/206: img_068_(a)_img_068.png
+2025-06-11 12:38:14,366 [INFO]    PuzzleAcc=1 PatchAcc=1.00 (Running puzzleAcc=0.13, patchAcc=0.36) | Time=3.74s
+2025-06-11 12:38:14,367 [INFO] Processing 96/206: img_068_(b)_img_068.png
+2025-06-11 12:38:18,067 [INFO]    PuzzleAcc=0 PatchAcc=0.56 (Running puzzleAcc=0.12, patchAcc=0.36) | Time=3.70s
+2025-06-11 12:38:18,068 [INFO] Processing 97/206: img_068_(c)_img_068.png
+2025-06-11 12:38:21,758 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.12, patchAcc=0.36) | Time=3.69s
+2025-06-11 12:38:21,759 [INFO] Processing 98/206: img_068_(d)_img_068.png
+2025-06-11 12:38:25,456 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.12, patchAcc=0.36) | Time=3.70s
+2025-06-11 12:38:25,456 [INFO] Processing 99/206: img_068_(e)_img_068.png
+2025-06-11 12:38:29,175 [INFO]    PuzzleAcc=0 PatchAcc=0.22 (Running puzzleAcc=0.12, patchAcc=0.36) | Time=3.72s
+2025-06-11 12:38:29,176 [INFO] Processing 100/206: img_068_(f)_img_068.png
+2025-06-11 12:38:32,945 [INFO]    PuzzleAcc=0 PatchAcc=0.56 (Running puzzleAcc=0.12, patchAcc=0.36) | Time=3.77s
+2025-06-11 12:38:32,946 [INFO] Processing 101/206: img_068_(g)_img_068.png
+2025-06-11 12:38:36,662 [INFO]    PuzzleAcc=0 PatchAcc=0.78 (Running puzzleAcc=0.12, patchAcc=0.36) | Time=3.72s
+2025-06-11 12:38:36,663 [INFO] Processing 102/206: img_068_(h)_img_068.png
+2025-06-11 12:38:40,431 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.12, patchAcc=0.36) | Time=3.77s
+2025-06-11 12:38:40,432 [INFO] Processing 103/206: img_068_(i)_img_068.png
+2025-06-11 12:38:44,449 [INFO]    PuzzleAcc=0 PatchAcc=0.33 (Running puzzleAcc=0.12, patchAcc=0.36) | Time=4.02s
+2025-06-11 12:38:44,451 [INFO] Processing 104/206: img_071_(a)_img_071.png
+2025-06-11 12:38:48,317 [INFO]    PuzzleAcc=1 PatchAcc=1.00 (Running puzzleAcc=0.12, patchAcc=0.37) | Time=3.87s
+2025-06-11 12:38:48,318 [INFO] Processing 105/206: img_071_(b)_img_071.png
+2025-06-11 12:38:52,044 [INFO]    PuzzleAcc=1 PatchAcc=1.00 (Running puzzleAcc=0.13, patchAcc=0.37) | Time=3.73s
+2025-06-11 12:38:52,045 [INFO] Processing 106/206: img_071_(c)_img_071.png
+2025-06-11 12:38:55,912 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.13, patchAcc=0.37) | Time=3.87s
+2025-06-11 12:38:55,913 [INFO] Processing 107/206: img_071_(d)_img_071.png
+2025-06-11 12:38:59,828 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.13, patchAcc=0.36) | Time=3.92s
+2025-06-11 12:38:59,829 [INFO] Processing 108/206: img_071_(e)_img_071.png
+2025-06-11 12:39:03,740 [INFO]    PuzzleAcc=0 PatchAcc=0.56 (Running puzzleAcc=0.13, patchAcc=0.37) | Time=3.91s
+2025-06-11 12:39:03,741 [INFO] Processing 109/206: img_071_(f)_img_071.png
+2025-06-11 12:39:07,536 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.13, patchAcc=0.36) | Time=3.80s
+2025-06-11 12:39:07,537 [INFO] Processing 110/206: img_071_(g)_img_071.png
+2025-06-11 12:39:11,241 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.13, patchAcc=0.36) | Time=3.70s
+2025-06-11 12:39:11,242 [INFO] Processing 111/206: img_071_(h)_img_071.png
+2025-06-11 12:39:15,018 [INFO]    PuzzleAcc=0 PatchAcc=0.22 (Running puzzleAcc=0.13, patchAcc=0.36) | Time=3.78s
+2025-06-11 12:39:15,019 [INFO] Processing 112/206: img_071_(i)_img_071.png
+2025-06-11 12:39:18,731 [INFO]    PuzzleAcc=0 PatchAcc=0.22 (Running puzzleAcc=0.12, patchAcc=0.36) | Time=3.71s
+2025-06-11 12:39:18,732 [INFO] Processing 113/206: img_071_(j)_img_071.png
+2025-06-11 12:39:22,489 [INFO]    PuzzleAcc=0 PatchAcc=0.44 (Running puzzleAcc=0.12, patchAcc=0.36) | Time=3.76s
+2025-06-11 12:39:22,490 [INFO] Processing 114/206: img_071_(k)_img_071.png
+2025-06-11 12:39:26,173 [INFO]    PuzzleAcc=0 PatchAcc=0.67 (Running puzzleAcc=0.12, patchAcc=0.36) | Time=3.68s
+2025-06-11 12:39:26,174 [INFO] Processing 115/206: img_071_(l)_img_071.png
+2025-06-11 12:39:29,921 [INFO]    PuzzleAcc=0 PatchAcc=0.22 (Running puzzleAcc=0.12, patchAcc=0.36) | Time=3.75s
+2025-06-11 12:39:29,923 [INFO] Processing 116/206: img_071_(m)_img_071.png
+2025-06-11 12:39:33,718 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.12, patchAcc=0.36) | Time=3.80s
+2025-06-11 12:39:33,719 [INFO] Processing 117/206: img_071_(n)_img_071.png
+2025-06-11 12:39:37,470 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.12, patchAcc=0.36) | Time=3.75s
+2025-06-11 12:39:37,471 [INFO] Processing 118/206: img_071_(o)_img_071.png
+2025-06-11 12:39:41,213 [INFO]    PuzzleAcc=0 PatchAcc=0.44 (Running puzzleAcc=0.12, patchAcc=0.36) | Time=3.74s
+2025-06-11 12:39:41,215 [INFO] Processing 119/206: img_071_(p)_img_071.png
+2025-06-11 12:39:44,965 [INFO]    PuzzleAcc=0 PatchAcc=0.33 (Running puzzleAcc=0.12, patchAcc=0.36) | Time=3.75s
+2025-06-11 12:39:44,966 [INFO] Processing 120/206: img_071_(q)_img_071.png
+2025-06-11 12:39:48,656 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.12, patchAcc=0.35) | Time=3.69s
+2025-06-11 12:39:48,657 [INFO] Processing 121/206: img_071_(r)_img_071.png
+2025-06-11 12:39:52,387 [INFO]    PuzzleAcc=1 PatchAcc=1.00 (Running puzzleAcc=0.12, patchAcc=0.36) | Time=3.73s
+2025-06-11 12:39:52,388 [INFO] Processing 122/206: img_073_(a)_img_073.png
+2025-06-11 12:39:56,071 [INFO]    PuzzleAcc=0 PatchAcc=0.33 (Running puzzleAcc=0.12, patchAcc=0.36) | Time=3.68s
+2025-06-11 12:39:56,072 [INFO] Processing 123/206: img_073_(b)_img_073.png
+2025-06-11 12:39:59,741 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.12, patchAcc=0.36) | Time=3.67s
+2025-06-11 12:39:59,742 [INFO] Processing 124/206: img_073_(c)_img_073.png
+2025-06-11 12:40:03,486 [INFO]    PuzzleAcc=0 PatchAcc=0.22 (Running puzzleAcc=0.12, patchAcc=0.35) | Time=3.74s
+2025-06-11 12:40:03,487 [INFO] Processing 125/206: img_073_(d)_img_073.png
+2025-06-11 12:40:07,371 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.12, patchAcc=0.35) | Time=3.88s
+2025-06-11 12:40:07,371 [INFO] Processing 126/206: img_073_(e)_img_073.png
+2025-06-11 12:40:11,478 [INFO]    PuzzleAcc=0 PatchAcc=0.78 (Running puzzleAcc=0.12, patchAcc=0.36) | Time=4.11s
+2025-06-11 12:40:11,480 [INFO] Processing 127/206: img_073_(f)_img_073.png
+2025-06-11 12:40:15,333 [INFO]    PuzzleAcc=0 PatchAcc=0.22 (Running puzzleAcc=0.12, patchAcc=0.35) | Time=3.85s
+2025-06-11 12:40:15,334 [INFO] Processing 128/206: img_073_(g)_img_073.png
+2025-06-11 12:40:19,186 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.12, patchAcc=0.35) | Time=3.85s
+2025-06-11 12:40:19,187 [INFO] Processing 129/206: img_073_(h)_img_073.png
+2025-06-11 12:40:22,994 [INFO]    PuzzleAcc=0 PatchAcc=0.22 (Running puzzleAcc=0.12, patchAcc=0.35) | Time=3.81s
+2025-06-11 12:40:22,995 [INFO] Processing 130/206: img_073_(i)_img_073.png
+2025-06-11 12:40:26,823 [INFO]    PuzzleAcc=0 PatchAcc=0.33 (Running puzzleAcc=0.12, patchAcc=0.35) | Time=3.83s
+2025-06-11 12:40:26,824 [INFO] Processing 131/206: img_073_(j)_img_073.png
+2025-06-11 12:40:30,664 [INFO]    PuzzleAcc=0 PatchAcc=0.78 (Running puzzleAcc=0.11, patchAcc=0.35) | Time=3.84s
+2025-06-11 12:40:30,665 [INFO] Processing 132/206: img_073_(k)_img_073.png
+2025-06-11 12:40:34,473 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.11, patchAcc=0.35) | Time=3.81s
+2025-06-11 12:40:34,474 [INFO] Processing 133/206: img_073_(l)_img_073.png
+2025-06-11 12:40:38,279 [INFO]    PuzzleAcc=0 PatchAcc=0.22 (Running puzzleAcc=0.11, patchAcc=0.35) | Time=3.80s
+2025-06-11 12:40:38,280 [INFO] Processing 134/206: img_073_(m)_img_073.png
+2025-06-11 12:40:42,191 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.11, patchAcc=0.35) | Time=3.91s
+2025-06-11 12:40:42,192 [INFO] Processing 135/206: img_073_(n)_img_073.png
+2025-06-11 12:40:46,049 [INFO]    PuzzleAcc=0 PatchAcc=0.33 (Running puzzleAcc=0.11, patchAcc=0.35) | Time=3.86s
+2025-06-11 12:40:46,050 [INFO] Processing 136/206: img_073_(o)_img_073.png
+2025-06-11 12:40:49,861 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.11, patchAcc=0.35) | Time=3.81s
+2025-06-11 12:40:49,862 [INFO] Processing 137/206: img_083_(a)_img_083.png
+2025-06-11 12:40:53,660 [INFO]    PuzzleAcc=0 PatchAcc=0.78 (Running puzzleAcc=0.11, patchAcc=0.35) | Time=3.80s
+2025-06-11 12:40:53,661 [INFO] Processing 138/206: img_083_(b)_img_083.png
+2025-06-11 12:40:57,526 [INFO]    PuzzleAcc=0 PatchAcc=0.33 (Running puzzleAcc=0.11, patchAcc=0.35) | Time=3.86s
+2025-06-11 12:40:57,527 [INFO] Processing 139/206: img_086_(a)_img_086.png
+2025-06-11 12:41:01,303 [INFO]    PuzzleAcc=0 PatchAcc=0.22 (Running puzzleAcc=0.11, patchAcc=0.35) | Time=3.78s
+2025-06-11 12:41:01,304 [INFO] Processing 140/206: img_086_(b)_img_086.png
+2025-06-11 12:41:05,280 [INFO]    PuzzleAcc=0 PatchAcc=0.22 (Running puzzleAcc=0.11, patchAcc=0.35) | Time=3.98s
+2025-06-11 12:41:05,281 [INFO] Processing 141/206: img_086_(c)_img_086.png
+2025-06-11 12:41:09,109 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.11, patchAcc=0.35) | Time=3.83s
+2025-06-11 12:41:09,110 [INFO] Processing 142/206: img_086_(d)_img_086.png
+2025-06-11 12:41:13,045 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.11, patchAcc=0.34) | Time=3.93s
+2025-06-11 12:41:13,046 [INFO] Processing 143/206: img_086_(e)_img_086.png
+2025-06-11 12:41:16,860 [INFO]    PuzzleAcc=1 PatchAcc=1.00 (Running puzzleAcc=0.11, patchAcc=0.35) | Time=3.81s
+2025-06-11 12:41:16,860 [INFO] Processing 144/206: img_086_(f)_img_086.png
+2025-06-11 12:41:20,640 [INFO]    PuzzleAcc=0 PatchAcc=0.44 (Running puzzleAcc=0.11, patchAcc=0.35) | Time=3.78s
+2025-06-11 12:41:20,641 [INFO] Processing 145/206: img_086_(g)_img_086.png
+2025-06-11 12:41:24,503 [INFO]    PuzzleAcc=0 PatchAcc=0.56 (Running puzzleAcc=0.11, patchAcc=0.35) | Time=3.86s
+2025-06-11 12:41:24,504 [INFO] Processing 146/206: img_086_(h)_img_086.png
+2025-06-11 12:41:28,404 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.11, patchAcc=0.35) | Time=3.90s
+2025-06-11 12:41:28,405 [INFO] Processing 147/206: img_086_(i)_img_086.png
+2025-06-11 12:41:32,375 [INFO]    PuzzleAcc=0 PatchAcc=0.56 (Running puzzleAcc=0.11, patchAcc=0.35) | Time=3.97s
+2025-06-11 12:41:32,376 [INFO] Processing 148/206: img_086_(j)_img_086.png
+2025-06-11 12:41:36,069 [INFO]    PuzzleAcc=0 PatchAcc=0.44 (Running puzzleAcc=0.11, patchAcc=0.35) | Time=3.69s
+2025-06-11 12:41:36,070 [INFO] Processing 149/206: img_086_(k)_img_086.png
+2025-06-11 12:41:39,816 [INFO]    PuzzleAcc=0 PatchAcc=0.22 (Running puzzleAcc=0.11, patchAcc=0.35) | Time=3.75s
+2025-06-11 12:41:39,817 [INFO] Processing 150/206: img_086_(l)_img_086.png
+2025-06-11 12:41:43,657 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.11, patchAcc=0.35) | Time=3.84s
+2025-06-11 12:41:43,659 [INFO] Processing 151/206: img_086_(m)_img_086.png
+2025-06-11 12:41:47,385 [INFO]    PuzzleAcc=0 PatchAcc=0.56 (Running puzzleAcc=0.11, patchAcc=0.35) | Time=3.73s
+2025-06-11 12:41:47,386 [INFO] Processing 152/206: img_086_(n)_img_086.png
+2025-06-11 12:41:51,207 [INFO]    PuzzleAcc=0 PatchAcc=0.44 (Running puzzleAcc=0.11, patchAcc=0.35) | Time=3.82s
+2025-06-11 12:41:51,208 [INFO] Processing 153/206: img_086_(o)_img_086.png
+2025-06-11 12:41:55,039 [INFO]    PuzzleAcc=0 PatchAcc=0.22 (Running puzzleAcc=0.10, patchAcc=0.35) | Time=3.83s
+2025-06-11 12:41:55,040 [INFO] Processing 154/206: img_086_(p)_img_086.png
+2025-06-11 12:41:58,868 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.10, patchAcc=0.35) | Time=3.83s
+2025-06-11 12:41:58,869 [INFO] Processing 155/206: img_086_(q)_img_086.png
+2025-06-11 12:42:02,573 [INFO]    PuzzleAcc=0 PatchAcc=0.44 (Running puzzleAcc=0.10, patchAcc=0.35) | Time=3.70s
+2025-06-11 12:42:02,574 [INFO] Processing 156/206: img_086_(r)_img_086.png
+2025-06-11 12:42:06,399 [INFO]    PuzzleAcc=0 PatchAcc=0.78 (Running puzzleAcc=0.10, patchAcc=0.35) | Time=3.82s
+2025-06-11 12:42:06,400 [INFO] Processing 157/206: img_086_(s)_img_086.png
+2025-06-11 12:42:10,103 [INFO]    PuzzleAcc=0 PatchAcc=0.44 (Running puzzleAcc=0.10, patchAcc=0.35) | Time=3.70s
+2025-06-11 12:42:10,105 [INFO] Processing 158/206: img_086_(t)_img_086.png
+2025-06-11 12:42:13,897 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.10, patchAcc=0.35) | Time=3.79s
+2025-06-11 12:42:13,899 [INFO] Processing 159/206: img_086_(u)_img_086.png
+2025-06-11 12:42:17,766 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.10, patchAcc=0.35) | Time=3.87s
+2025-06-11 12:42:17,767 [INFO] Processing 160/206: img_086_(v)_img_086.png
+2025-06-11 12:42:21,583 [INFO]    PuzzleAcc=1 PatchAcc=1.00 (Running puzzleAcc=0.11, patchAcc=0.35) | Time=3.82s
+2025-06-11 12:42:21,584 [INFO] Processing 161/206: img_086_(w)_img_086.png
+2025-06-11 12:42:25,347 [INFO]    PuzzleAcc=0 PatchAcc=0.33 (Running puzzleAcc=0.11, patchAcc=0.35) | Time=3.76s
+2025-06-11 12:42:25,348 [INFO] Processing 162/206: img_086_(x)_img_086.png
+2025-06-11 12:42:29,095 [INFO]    PuzzleAcc=1 PatchAcc=1.00 (Running puzzleAcc=0.11, patchAcc=0.36) | Time=3.75s
+2025-06-11 12:42:29,096 [INFO] Processing 163/206: img_086_(y)_img_086.png
+2025-06-11 12:42:32,977 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.11, patchAcc=0.35) | Time=3.88s
+2025-06-11 12:42:32,978 [INFO] Processing 164/206: img_086_(z)_img_086.png
+2025-06-11 12:42:36,814 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.11, patchAcc=0.35) | Time=3.84s
+2025-06-11 12:42:36,815 [INFO] Processing 165/206: img_086_({)_img_086.png
+2025-06-11 12:42:40,651 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.11, patchAcc=0.35) | Time=3.84s
+2025-06-11 12:42:40,652 [INFO] Processing 166/206: img_086_(|)_img_086.png
+2025-06-11 12:42:44,558 [INFO]    PuzzleAcc=0 PatchAcc=0.44 (Running puzzleAcc=0.11, patchAcc=0.35) | Time=3.91s
+2025-06-11 12:42:44,559 [INFO] Processing 167/206: img_086_(})_img_086.png
+2025-06-11 12:42:48,699 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.11, patchAcc=0.35) | Time=4.14s
+2025-06-11 12:42:48,700 [INFO] Processing 168/206: img_086_(~)_img_086.png
+2025-06-11 12:42:52,550 [INFO]    PuzzleAcc=0 PatchAcc=0.22 (Running puzzleAcc=0.11, patchAcc=0.35) | Time=3.85s
+2025-06-11 12:42:52,551 [INFO] Processing 169/206: img_086_()_img_086.png
+2025-06-11 12:42:56,515 [INFO]    PuzzleAcc=0 PatchAcc=0.22 (Running puzzleAcc=0.11, patchAcc=0.35) | Time=3.96s
+2025-06-11 12:42:56,516 [INFO] Processing 170/206: img_087_(a)_img_087.png
+2025-06-11 12:43:00,310 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.11, patchAcc=0.35) | Time=3.79s
+2025-06-11 12:43:00,311 [INFO] Processing 171/206: img_087_(b)_img_087.png
+2025-06-11 12:43:04,029 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.11, patchAcc=0.34) | Time=3.72s
+2025-06-11 12:43:04,030 [INFO] Processing 172/206: img_087_(c)_img_087.png
+2025-06-11 12:43:07,732 [INFO]    PuzzleAcc=0 PatchAcc=0.33 (Running puzzleAcc=0.10, patchAcc=0.34) | Time=3.70s
+2025-06-11 12:43:07,733 [INFO] Processing 173/206: img_095_(a)_img_095.png
+2025-06-11 12:43:11,421 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.10, patchAcc=0.34) | Time=3.69s
+2025-06-11 12:43:11,422 [INFO] Processing 174/206: img_095_(b)_img_095.png
+2025-06-11 12:43:15,193 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.10, patchAcc=0.34) | Time=3.77s
+2025-06-11 12:43:15,194 [INFO] Processing 175/206: img_095_(c)_img_095.png
+2025-06-11 12:43:18,879 [INFO]    PuzzleAcc=0 PatchAcc=0.33 (Running puzzleAcc=0.10, patchAcc=0.34) | Time=3.68s
+2025-06-11 12:43:18,880 [INFO] Processing 176/206: img_097_(a)_img_097.png
+2025-06-11 12:43:22,610 [INFO]    PuzzleAcc=0 PatchAcc=0.67 (Running puzzleAcc=0.10, patchAcc=0.34) | Time=3.73s
+2025-06-11 12:43:22,611 [INFO] Processing 177/206: img_097_(b)_img_097.png
+2025-06-11 12:43:26,352 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.10, patchAcc=0.34) | Time=3.74s
+2025-06-11 12:43:26,353 [INFO] Processing 178/206: img_111_(a)_img_111.png
+2025-06-11 12:43:31,181 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.10, patchAcc=0.34) | Time=4.83s
+2025-06-11 12:43:31,182 [INFO] Processing 179/206: img_111_(b)_img_111.png
+2025-06-11 12:43:34,908 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.10, patchAcc=0.34) | Time=3.73s
+2025-06-11 12:43:34,909 [INFO] Processing 180/206: img_111_(c)_img_111.png
+2025-06-11 12:43:38,722 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.10, patchAcc=0.34) | Time=3.81s
+2025-06-11 12:43:38,723 [INFO] Processing 181/206: img_111_(d)_img_111.png
+2025-06-11 12:43:42,600 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.10, patchAcc=0.33) | Time=3.88s
+2025-06-11 12:43:42,601 [INFO] Processing 182/206: img_111_(e)_img_111.png
+2025-06-11 12:43:46,839 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.10, patchAcc=0.33) | Time=4.24s
+2025-06-11 12:43:46,840 [INFO] Processing 183/206: img_111_(f)_img_111.png
+2025-06-11 12:43:50,716 [INFO]    PuzzleAcc=0 PatchAcc=0.22 (Running puzzleAcc=0.10, patchAcc=0.33) | Time=3.88s
+2025-06-11 12:43:50,717 [INFO] Processing 184/206: img_111_(g)_img_111.png
+2025-06-11 12:43:54,810 [INFO]    PuzzleAcc=0 PatchAcc=0.22 (Running puzzleAcc=0.10, patchAcc=0.33) | Time=4.09s
+2025-06-11 12:43:54,811 [INFO] Processing 185/206: img_111_(h)_img_111.png
+2025-06-11 12:43:58,725 [INFO]    PuzzleAcc=1 PatchAcc=1.00 (Running puzzleAcc=0.10, patchAcc=0.34) | Time=3.91s
+2025-06-11 12:43:58,726 [INFO] Processing 186/206: img_111_(i)_img_111.png
+2025-06-11 12:44:02,660 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.10, patchAcc=0.33) | Time=3.93s
+2025-06-11 12:44:02,661 [INFO] Processing 187/206: img_111_(j)_img_111.png
+2025-06-11 12:44:06,955 [INFO]    PuzzleAcc=0 PatchAcc=0.33 (Running puzzleAcc=0.10, patchAcc=0.33) | Time=4.29s
+2025-06-11 12:44:06,956 [INFO] Processing 188/206: img_111_(k)_img_111.png
+2025-06-11 12:44:10,823 [INFO]    PuzzleAcc=0 PatchAcc=0.11 (Running puzzleAcc=0.10, patchAcc=0.33) | Time=3.87s
+2025-06-11 12:44:10,824 [INFO] Processing 189/206: img_111_(l)_img_111.png
+2025-06-11 12:44:14,975 [INFO]    PuzzleAcc=0 PatchAcc=0.22 (Running puzzleAcc=0.10, patchAcc=0.33) | Time=4.15s
+2025-06-11 12:44:14,976 [INFO] Processing 190/206: img_111_(m)_img_111.png
+2025-06-11 12:44:18,826 [INFO]    PuzzleAcc=1 PatchAcc=1.00 (Running puzzleAcc=0.11, patchAcc=0.34) | Time=3.85s
+2025-06-11 12:44:18,827 [INFO] Processing 191/206: img_111_(n)_img_111.png
+2025-06-11 12:44:22,569 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.10, patchAcc=0.33) | Time=3.74s
+2025-06-11 12:44:22,570 [INFO] Processing 192/206: img_111_(o)_img_111.png
+2025-06-11 12:44:26,290 [INFO]    PuzzleAcc=0 PatchAcc=0.44 (Running puzzleAcc=0.10, patchAcc=0.33) | Time=3.72s
+2025-06-11 12:44:26,291 [INFO] Processing 193/206: img_111_(p)_img_111.png
+2025-06-11 12:44:30,483 [INFO]    PuzzleAcc=0 PatchAcc=0.33 (Running puzzleAcc=0.10, patchAcc=0.33) | Time=4.19s
+2025-06-11 12:44:30,484 [INFO] Processing 194/206: img_111_(q)_img_111.png
+2025-06-11 12:44:34,242 [INFO]    PuzzleAcc=1 PatchAcc=1.00 (Running puzzleAcc=0.11, patchAcc=0.34) | Time=3.76s
+2025-06-11 12:44:34,243 [INFO] Processing 195/206: img_111_(r)_img_111.png
+2025-06-11 12:44:37,961 [INFO]    PuzzleAcc=0 PatchAcc=0.22 (Running puzzleAcc=0.11, patchAcc=0.34) | Time=3.72s
+2025-06-11 12:44:37,962 [INFO] Processing 196/206: img_124_1_(a)_img_124_1.png
+2025-06-11 12:44:41,709 [INFO]    PuzzleAcc=0 PatchAcc=0.22 (Running puzzleAcc=0.11, patchAcc=0.34) | Time=3.75s
+2025-06-11 12:44:41,710 [INFO] Processing 197/206: img_124_1_(b)_img_124_1.png
+2025-06-11 12:44:45,648 [INFO]    PuzzleAcc=0 PatchAcc=0.56 (Running puzzleAcc=0.11, patchAcc=0.34) | Time=3.94s
+2025-06-11 12:44:45,649 [INFO] Processing 198/206: img_124_1_(c)_img_124_1.png
+2025-06-11 12:44:49,483 [INFO]    PuzzleAcc=0 PatchAcc=0.22 (Running puzzleAcc=0.11, patchAcc=0.34) | Time=3.83s
+2025-06-11 12:44:49,485 [INFO] Processing 199/206: img_124_2_(a)_img_124_2.png
+2025-06-11 12:44:53,316 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.11, patchAcc=0.34) | Time=3.83s
+2025-06-11 12:44:53,317 [INFO] Processing 200/206: img_124_2_(b)_img_124_2.png
+2025-06-11 12:44:57,098 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.10, patchAcc=0.33) | Time=3.78s
+2025-06-11 12:44:57,099 [INFO] Processing 201/206: img_124_2_(c)_img_124_2.png
+2025-06-11 12:45:00,864 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.10, patchAcc=0.33) | Time=3.76s
+2025-06-11 12:45:00,865 [INFO] Processing 202/206: img_130_(a)_img_130.png
+2025-06-11 12:45:04,676 [INFO]    PuzzleAcc=0 PatchAcc=0.67 (Running puzzleAcc=0.10, patchAcc=0.33) | Time=3.81s
+2025-06-11 12:45:04,677 [INFO] Processing 203/206: img_130_(b)_img_130.png
+2025-06-11 12:45:08,918 [INFO]    PuzzleAcc=0 PatchAcc=0.33 (Running puzzleAcc=0.10, patchAcc=0.33) | Time=4.24s
+2025-06-11 12:45:08,919 [INFO] Processing 204/206: img_130_(c)_img_130.png
+2025-06-11 12:45:13,086 [INFO]    PuzzleAcc=0 PatchAcc=0.22 (Running puzzleAcc=0.10, patchAcc=0.33) | Time=4.17s
+2025-06-11 12:45:13,087 [INFO] Processing 205/206: img_130_(d)_img_130.png
+2025-06-11 12:45:16,872 [INFO]    PuzzleAcc=0 PatchAcc=0.44 (Running puzzleAcc=0.10, patchAcc=0.33) | Time=3.79s
+2025-06-11 12:45:16,873 [INFO] Processing 206/206: img_130_(e)_img_130.png
+2025-06-11 12:45:21,009 [INFO]    PuzzleAcc=0 PatchAcc=0.00 (Running puzzleAcc=0.10, patchAcc=0.33) | Time=4.14s
+2025-06-11 12:45:21,010 [INFO] ============================================
+2025-06-11 12:45:21,010 [INFO] Processed 206 images (including resumed ones).
+2025-06-11 12:45:21,010 [INFO] Puzzle Accuracy: 0.1019
+2025-06-11 12:45:21,010 [INFO] Patch Accuracy: 0.3323
+2025-06-11 12:45:21,010 [INFO] Total inference time: 809.97s
+2025-06-11 12:45:21,010 [INFO] ============================================
