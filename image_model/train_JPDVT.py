@@ -192,17 +192,19 @@ def main(args):
                     "resume_from": args.ckpt if args.ckpt else None,
                     "optimizer": "AdamW",
                     "diffusion_steps": 1000,
-                    "grid_size": "3x3"
+                    "grid_size": "3x3",
+                    # System info in config instead of logging
+                    "system_info": {
+                        "gpu_count": torch.cuda.device_count(),
+                    }
                 },
                 resume="allow" if args.ckpt else None
             )
             
-            # Log system info
+            # Log initial system info as a single entry
             wandb.log({
-                "system/gpu_count": torch.cuda.device_count(),
-                "system/cuda_version": torch.version.cuda,
-                "system/pytorch_version": torch.__version__,
-            })
+                "system_gpu_count": torch.cuda.device_count(),
+            }, step=0)
             
     else:
         logger = create_logger(None)
@@ -407,7 +409,7 @@ def main(args):
                         "ema": ema.state_dict(),
                         "opt": opt.state_dict(),
                         "args": args,
-                        "train_steps": train_steps  # ### ADDED: store the current step
+                        "train_steps": train_steps
                     }
                     checkpoint_path = f"{checkpoint_dir}/{train_steps:07d}.pt"
                     torch.save(checkpoint, checkpoint_path)
@@ -416,9 +418,9 @@ def main(args):
                     # Log checkpoint save to wandb
                     if not args.disable_wandb:
                         wandb.log({
-                            "checkpoint_saved": train_steps,
-                            "checkpoint_path": checkpoint_path
-                        })
+                            "checkpoints/saved_at_step": train_steps,
+                            "checkpoints/path": checkpoint_path
+                        }, step=train_steps)
                 dist.barrier()
 
     model.eval()  # important! This disables randomized embedding dropout
@@ -426,6 +428,11 @@ def main(args):
     if rank == 0:
         logger.info("Done!")
         if not args.disable_wandb:
+            # Log final summary
+            wandb.log({
+                "training/final_step": train_steps,
+                "training/status": "completed"
+            })
             wandb.finish()
     cleanup()
 
