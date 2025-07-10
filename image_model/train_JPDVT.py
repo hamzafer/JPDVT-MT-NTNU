@@ -19,6 +19,7 @@ from time import time
 import argparse
 import logging
 import os
+import wandb
 
 from models import DiT_models
 from models import get_2d_sincos_pos_embed
@@ -128,6 +129,81 @@ def main(args):
         os.makedirs(checkpoint_dir, exist_ok=True)
         logger = create_logger(experiment_dir)
         logger.info(f"Experiment directory created at {experiment_dir}")
+        
+        # Create descriptive run name
+        run_name_parts = [
+            f"exp{experiment_index:03d}",
+            args.dataset.upper(),
+            args.model,
+            f"img{args.image_size}",
+            f"bs{args.global_batch_size}",
+            f"ep{args.epochs}",
+            f"lr{1e-4}".replace(".", ""),
+            f"seed{args.global_seed}",
+            f"gpu{dist.get_world_size()}"
+        ]
+        
+        # Add optional flags
+        if args.crop:
+            run_name_parts.append("CROP")
+        if args.add_mask:
+            run_name_parts.append("MASK")
+        if args.ckpt:
+            run_name_parts.append("RESUME")
+        
+        # Add custom tag if provided
+        if hasattr(args, 'wandb_tag') and args.wandb_tag:
+            run_name_parts.append(args.wandb_tag.upper())
+        
+        descriptive_run_name = "-".join(run_name_parts)
+        
+        # Initialize wandb only on rank 0
+        if not args.disable_wandb:
+            wandb.init(
+                project="JPDVT",
+                entity="hamzafer3-ntnu",
+                name=descriptive_run_name,
+                tags=[
+                    args.dataset,
+                    args.model,
+                    f"img_{args.image_size}",
+                    f"bs_{args.global_batch_size}",
+                    "crop" if args.crop else "no_crop",
+                    "mask" if args.add_mask else "no_mask",
+                    "resume" if args.ckpt else "fresh",
+                    f"gpu_{dist.get_world_size()}"
+                ],
+                config={
+                    "model": args.model,
+                    "dataset": args.dataset,
+                    "image_size": args.image_size,
+                    "epochs": args.epochs,
+                    "global_batch_size": args.global_batch_size,
+                    "learning_rate": 1e-4,
+                    "weight_decay": 0,
+                    "global_seed": args.global_seed,
+                    "crop": args.crop,
+                    "add_mask": args.add_mask,
+                    "world_size": dist.get_world_size(),
+                    "experiment_dir": experiment_dir,
+                    "log_every": args.log_every,
+                    "ckpt_every": args.ckpt_every,
+                    "num_workers": args.num_workers,
+                    "resume_from": args.ckpt if args.ckpt else None,
+                    "optimizer": "AdamW",
+                    "diffusion_steps": 1000,
+                    "grid_size": "3x3"
+                },
+                resume="allow" if args.ckpt else None
+            )
+            
+            # Log system info
+            wandb.log({
+                "system/gpu_count": torch.cuda.device_count(),
+                "system/cuda_version": torch.version.cuda,
+                "system/pytorch_version": torch.__version__,
+            })
+            
     else:
         logger = create_logger(None)
 
@@ -308,6 +384,15 @@ def main(args):
                 if rank == 0:
                     logger.info(f"(step={train_steps:07d}) Train Loss: {avg_loss:.4f}, "
                                 f"Train Steps/Sec: {steps_per_sec:.2f}")
+                    
+                    # Log to wandb
+                    if not args.disable_wandb:
+                        wandb.log({
+                            "train_loss": avg_loss,
+                            "train_steps_per_sec": steps_per_sec,
+                            "epoch": epoch,
+                            "step": train_steps
+                        })
 
                 # reset counters
                 running_loss = 0
@@ -327,12 +412,21 @@ def main(args):
                     checkpoint_path = f"{checkpoint_dir}/{train_steps:07d}.pt"
                     torch.save(checkpoint, checkpoint_path)
                     logger.info(f"Saved checkpoint to {checkpoint_path}")
+                    
+                    # Log checkpoint save to wandb
+                    if not args.disable_wandb:
+                        wandb.log({
+                            "checkpoint_saved": train_steps,
+                            "checkpoint_path": checkpoint_path
+                        })
                 dist.barrier()
 
     model.eval()  # important! This disables randomized embedding dropout
 
     if rank == 0:
         logger.info("Done!")
+        if not args.disable_wandb:
+            wandb.finish()
     cleanup()
 
 
@@ -352,5 +446,7 @@ if __name__ == "__main__":
     parser.add_argument("--log-every", type=int, default=100)
     parser.add_argument("--ckpt-every", type=int, default=10000)
     parser.add_argument("--ckpt", type=str, default='')
+    parser.add_argument("--disable-wandb", action='store_true', default=False, help="Disable wandb logging")
+    parser.add_argument("--wandb-tag", type=str, default='', help="Custom tag for wandb run name")
     args = parser.parse_args()
     main(args)
