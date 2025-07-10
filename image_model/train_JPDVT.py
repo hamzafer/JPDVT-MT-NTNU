@@ -26,7 +26,7 @@ from models import get_2d_sincos_pos_embed
 from diffusion import create_diffusion
 from diffusers.models import AutoencoderKL
 
-from datasets import MET
+from datasets import MET, TEXMET
 from einops import rearrange
 
 #################################################################################
@@ -193,6 +193,7 @@ def main(args):
                     "optimizer": "AdamW",
                     "diffusion_steps": 1000,
                     "grid_size": "3x3",
+                    "dataset_size": "18644_images",
                     # System info in config instead of logging
                     "system_info": {
                         "gpu_count": torch.cuda.device_count(),
@@ -295,6 +296,8 @@ def main(args):
     # Setup data:
     if args.dataset == "met":
         dataset = MET(args.data_path, 'train')
+    elif args.dataset == "texmet":
+        dataset = TEXMET(args.data_path, 'train')
     elif args.dataset == "imagenet":
         dataset = ImageFolder(args.data_path, transform=transform)
 
@@ -441,7 +444,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--results-dir", type=str, default="results")
     parser.add_argument("--model", type=str, choices=list(DiT_models.keys()), default="JPDVT")
-    parser.add_argument("--dataset", type=str, choices=["imagenet", "met"], default="imagenet")
+    parser.add_argument("--dataset", type=str, choices=["imagenet", "met", "texmet"], default="imagenet")
     parser.add_argument("--data-path", type=str, required=True)
     parser.add_argument("--crop", action='store_true', default=False)
     parser.add_argument("--add-mask", action='store_true', default=False)
