@@ -404,7 +404,7 @@ def main(args):
                 log_steps = 0
                 start_time = time()
 
-            # Save JPDVT checkpoint
+            # Save checkpoint and validate
             if train_steps % args.ckpt_every == 0 and train_steps > 0:
                 if rank == 0:
                     checkpoint = {
@@ -418,26 +418,228 @@ def main(args):
                     torch.save(checkpoint, checkpoint_path)
                     logger.info(f"Saved checkpoint to {checkpoint_path}")
                     
-                    # Log checkpoint save to wandb
+                    # Run validation
+                    logger.info("Running validation...")
+                    try:
+                        puzzle_acc, patch_acc = validate_model(model, diffusion, args.data_path, device, logger, args)
+                        
+                        # Log to wandb with more explicit logging
+                        if not args.disable_wandb:
+                            wandb.log({
+                                "checkpoints/saved_at_step": train_steps,
+                                "checkpoints/path": checkpoint_path,
+                                "validation/puzzle_accuracy": puzzle_acc,
+                                "validation/patch_accuracy": patch_acc,
+                                "validation/checkpoint_epoch": epoch
+                            }, step=train_steps)
+                            # Force commit
+                            wandb.log({}, commit=True)
+                            logger.info(f"Checkpoint validation logged to wandb: puzzle_acc={puzzle_acc:.4f}")
+                    
+                    except Exception as e:
+                        logger.error(f"Checkpoint validation failed: {e}")
+                        import traceback
+                        logger.error(traceback.format_exc())
+                
+                dist.barrier()
+
+        # Validate every 100 epochs (in addition to checkpoint validation)
+        # CHANGED: Also validate after first epoch for testing
+        if (epoch > 0 and epoch % 100 == 0) or epoch == 1:
+            if rank == 0:
+                logger.info(f"Running validation at epoch {epoch}...")
+                try:
+                    puzzle_acc, patch_acc = validate_model(model, diffusion, args.data_path, device, logger, args)
+                    
+                    # Force wandb sync
                     if not args.disable_wandb:
                         wandb.log({
-                            "checkpoints/saved_at_step": train_steps,
-                            "checkpoints/path": checkpoint_path
+                            "validation/puzzle_accuracy": puzzle_acc,
+                            "validation/patch_accuracy": patch_acc,
+                            "validation/epoch": epoch
                         }, step=train_steps)
-                dist.barrier()
+                        # Force sync to ensure data is sent
+                        wandb.log({}, commit=True)
+                        logger.info(f"Logged validation results to wandb: puzzle_acc={puzzle_acc:.4f}, patch_acc={patch_acc:.4f}")
+                    
+                except Exception as e:
+                    logger.error(f"Validation failed: {e}")
+                    import traceback
+                    logger.error(traceback.format_exc())
 
     model.eval()  # important! This disables randomized embedding dropout
 
+    # Save final checkpoint
     if rank == 0:
-        logger.info("Done!")
+        final_checkpoint = {
+            "model": model.module.state_dict(),
+            "ema": ema.state_dict(),
+            "opt": opt.state_dict(),
+            "args": args,
+            "train_steps": train_steps
+        }
+        final_checkpoint_path = f"{checkpoint_dir}/final_{train_steps:07d}.pt"
+        torch.save(final_checkpoint, final_checkpoint_path)
+        logger.info(f"Saved final checkpoint to {final_checkpoint_path}")
+        
+        # Run final validation
+        logger.info("Running final validation...")
+        puzzle_acc, patch_acc = validate_model(model, diffusion, args.data_path, device, logger, args)
+        
         if not args.disable_wandb:
-            # Log final summary
             wandb.log({
+                "final/puzzle_accuracy": puzzle_acc,
+                "final/patch_accuracy": patch_acc,
+                "final/checkpoint_path": final_checkpoint_path,
                 "training/final_step": train_steps,
                 "training/status": "completed"
             })
             wandb.finish()
+        
+        logger.info("Done!")
+    
     cleanup()
+
+@torch.no_grad()
+def validate_model(model, diffusion, data_path, device, logger, args, num_samples=100):
+    """
+    Validate the model on a subset of images and return accuracy metrics.
+    """
+    from sklearn.metrics import pairwise_distances
+    
+    model.eval()
+    correct_puzzles = 0
+    total_patch_matches = 0
+    total_patches = 0
+    
+    # Setup validation dataset - USE VAL SPLIT!
+    if args.dataset == "met":
+        val_dataset = MET(data_path, 'val')  # Changed to 'val'
+    elif args.dataset == "texmet":
+        val_dataset = TEXMET(data_path, 'val')  # Changed to 'val'
+    elif args.dataset == "imagenet":
+        # For ImageNet, use a validation transform without augmentation
+        transform = transforms.Compose([
+            transforms.Lambda(lambda pil_image: center_crop_arr(pil_image, 288)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5], inplace=True)
+        ])
+        # Assuming ImageNet val folder structure
+        val_dataset = ImageFolder(data_path.replace('train', 'val'), transform=transform)
+    
+    # Create a simple loader for validation (no DDP)
+    val_indices = torch.randperm(len(val_dataset))[:num_samples].tolist()
+    val_subset = torch.utils.data.Subset(val_dataset, val_indices)
+    val_loader = DataLoader(val_subset, batch_size=1, shuffle=False, num_workers=2)
+    
+    if logger:
+        logger.info(f"Validation dataset: {len(val_dataset)} images, using {num_samples} samples")
+    
+    # Setup validation parameters
+    G = 3  # Grid size
+    time_emb = torch.tensor(get_2d_sincos_pos_embed(8, G)).unsqueeze(0).float().to(device)
+    PATCHES_PER_SIDE = args.image_size // 16
+    time_emb_noise = torch.tensor(get_2d_sincos_pos_embed(8, PATCHES_PER_SIDE)).unsqueeze(0).float().to(device)
+    time_emb_noise = torch.randn_like(time_emb_noise).repeat(1, 1, 1)
+    
+    # Simple validation diffusion with fewer steps
+    val_diffusion = create_diffusion("250")
+    
+    def find_permutation(distance_matrix):
+        """Greedy algorithm to find permutation order"""
+        sort_list = []
+        distance_matrix_copy = distance_matrix.copy()
+        for _ in range(distance_matrix.shape[1]):
+            order = distance_matrix_copy[:, 0].argmin()
+            sort_list.append(order)
+            distance_matrix_copy = distance_matrix_copy[:, 1:]
+            distance_matrix_copy[order, :] = 2024
+        return sort_list
+    
+    if logger:
+        logger.info("Starting validation inference...")
+    
+    for i, batch in enumerate(val_loader):
+        if args.dataset == 'imagenet':
+            x, _ = batch
+        else:
+            x = batch
+        x = x.to(device)
+        
+        # Create scrambled puzzle
+        indices = np.random.permutation(G * G)
+        
+        # Split into patches and scramble
+        x_patches = rearrange(
+            x, 'b c (p1 h1) (p2 w1) -> b c (p1 p2) h1 w1', 
+            p1=G, p2=G, h1=args.image_size//G, w1=args.image_size//G
+        )
+        x_patches = x_patches[:, :, indices, :, :]
+        x_scrambled = rearrange(
+            x_patches, 'b c (p1 p2) h1 w1 -> b c (p1 h1) (p2 w1)', 
+            p1=G, p2=G, h1=args.image_size//G, w1=args.image_size//G
+        )
+        
+        try:
+            # Run inference
+            samples = val_diffusion.p_sample_loop(
+                model.forward, 
+                x_scrambled, 
+                time_emb_noise.shape, 
+                time_emb_noise, 
+                clip_denoised=False, 
+                model_kwargs=None, 
+                progress=False, 
+                device=device
+            )
+            
+            for sample in samples:
+                sample_patch_dim = args.image_size // (16 * G)
+                
+                sample = rearrange(
+                    sample, '(p1 h1 p2 w1) d -> (p1 p2) (h1 w1) d', 
+                    p1=G, p2=G, h1=sample_patch_dim, w1=sample_patch_dim
+                )
+                
+                sample = sample.mean(1)
+                
+                dist_matrix = pairwise_distances(sample.cpu().numpy(), time_emb[0].cpu().numpy(), metric='manhattan')
+                order = find_permutation(dist_matrix)
+                pred = np.asarray(order).argsort()
+                
+                # Calculate metrics
+                puzzle_correct = int((pred == indices).all())
+                patch_matches = int((pred == indices).sum())
+                
+                correct_puzzles += puzzle_correct
+                total_patch_matches += patch_matches
+                total_patches += G * G
+                
+        except Exception as e:
+            if logger:
+                logger.warning(f"Validation sample {i} failed: {e}")
+            continue
+        
+        # Progress logging
+        if (i + 1) % 20 == 0 and logger:
+            logger.info(f"Validation progress: {i+1}/{num_samples} samples processed")
+    
+    # Calculate accuracies
+    puzzle_accuracy = correct_puzzles / num_samples if num_samples > 0 else 0.0
+    patch_accuracy = total_patch_matches / total_patches if total_patches > 0 else 0.0
+    
+    if logger:
+        logger.info(f"=== VALIDATION RESULTS ===")
+        logger.info(f"Samples processed: {num_samples}")
+        logger.info(f"Correct puzzles: {correct_puzzles}")
+        logger.info(f"Total patch matches: {total_patch_matches}")
+        logger.info(f"Total patches: {total_patches}")
+        logger.info(f"Puzzle Accuracy: {puzzle_accuracy:.4f} ({puzzle_accuracy*100:.2f}%)")
+        logger.info(f"Patch Accuracy: {patch_accuracy:.4f} ({patch_accuracy*100:.2f}%)")
+        logger.info(f"========================")
+    
+    model.train()
+    return puzzle_accuracy, patch_accuracy
 
 
 if __name__ == "__main__":
