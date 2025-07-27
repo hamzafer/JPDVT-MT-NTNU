@@ -104,9 +104,10 @@ class MET(Dataset):
         return image
 
 class TEXMET(Dataset):
-    def __init__(self, data_dir, split):
+    def __init__(self, data_dir, split, image_size=288):
         self.split = split
         self.data_dir = data_dir
+        self.image_size = image_size
         
         # Load image files from the corresponding split text file
         split_file = os.path.join(data_dir, f"{split}_files.txt")
@@ -187,25 +188,37 @@ class TEXMET(Dataset):
             transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5], inplace=True)
         ])
 
+        # Calculate patch size based on image_size
+        if image_size == 192:
+            patch_size = 64
+            grid_output_size = 192  # 64*3
+        else:  # default 288
+            patch_size = 96
+            grid_output_size = 288  # 96*3
+            
+        self.patch_size = patch_size
+        self.grid_output_size = grid_output_size
+
     def __len__(self):
         return len(self.image_files)
 
     def rand_erode(self, image, n_patches):
         """Create puzzle-like patches with gaps between them"""
-        output = torch.zeros(3, 96*3, 96*3)
-        crop = transforms.RandomCrop((96, 96))
-        gap = 48
-        patch_size = 100
+        output = torch.zeros(3, self.grid_output_size, self.grid_output_size)
+        crop = transforms.RandomCrop((self.patch_size, self.patch_size))
+        gap = self.patch_size // 2  # 48 for 96, 32 for 64
+        patch_region_size = self.patch_size + gap
         
         for i in range(n_patches):
             for j in range(n_patches):
-                left = i * (patch_size + gap)
-                upper = j * (patch_size + gap)
-                right = left + patch_size
-                lower = upper + patch_size
+                left = i * patch_region_size
+                upper = j * patch_region_size
+                right = left + patch_region_size
+                lower = upper + patch_region_size
 
                 patch = crop(image[:, left:right, upper:lower])
-                output[:, i*96:i*96+96, j*96:j*96+96] = patch
+                output[:, i*self.patch_size:(i+1)*self.patch_size, 
+                       j*self.patch_size:(j+1)*self.patch_size] = patch
 
         return output    
 

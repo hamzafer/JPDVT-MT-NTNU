@@ -15,6 +15,7 @@ import time
 import glob
 import logging
 import csv
+import argparse
 
 import torch
 import torchvision
@@ -35,17 +36,31 @@ from diffusion import create_diffusion
 #                               CONFIGURATIONS
 ###############################################################################
 # Paths
-DATA_DIR = "/cluster/home/muhamhz/data/TEXMET/test"
-RESULTS_BASE_DIR = "/cluster/home/muhamhz/JPDVT/image_model/inference"
-LOGS_DIR = "/cluster/home/muhamhz/JPDVT/image_model/logs"
+# DATA_DIR = "/cluster/home/muhamhz/data/inpainting/gt_images/image"
+# DATA_DIR = "/cluster/home/muhamhz/data/inpainting/exp1_irregular_masking/masked"
+# DATA_DIR = "/cluster/home/muhamhz/data/inpainting/exp1_irregular_masking/results/imgs"
+# DATA_DIR = "/cluster/home/muhamhz/data/inpainting/exp2_regular_masking/masked"
+DATA_DIR = "/cluster/home/muhamhz/data/inpainting/exp2_regular_masking/results/imgs"
 
-# Model / Inference params
+# Name for progress CSV (where we record results per image for resume)
+PROGRESS_CSV = "dsfaffdshfgfghfmbghdsgfdgfgdsfsgfgfdgdjhjdfasdf.csv"
+
+RESULTS_BASE_DIR = "/cluster/home/muhamhz/JPDVT/image_model/inference/inpainting"
+
+# Create descriptive logs directory based on model parameters
 MODEL_NAME = "JPDVT"
-CHECKPOINT_PATH = "/cluster/home/muhamhz/JPDVT/image_model/results/002-texmet-JPDVT-crop/checkpoints/manual_1752163781-parsit.pt"
-IMAGE_SIZE = 288              # e.g., 192 or 288
+# CHECKPOINT_PATH = "/cluster/home/muhamhz/JPDVT/image_model/results/006-texmet-JPDVT-crop/checkpoints/final_0077500.pt"
+CHECKPOINT_PATH = "/cluster/home/muhamhz/JPDVT/image_model/models/3x3_Full/2850000.pt"
+# CHECKPOINT_PATH = "/cluster/home/muhamhz/JPDVT/image_model/results_finetune/003-texmet-JPDVT-crop/checkpoints/final_2927500.pt"
+# IMAGE_SIZE = 288              # e.g., 192 or 288
+IMAGE_SIZE = 192              # e.g., 192 or 288
 GRID_SIZE = 3                 # e.g., 3 => 3x3 puzzle
-SEED = 0
+SEED = 42
 NUM_SAMPLING_STEPS = 250
+
+# Extract checkpoint identifier for logs directory
+checkpoint_name = os.path.basename(CHECKPOINT_PATH).replace('.pt', '')
+LOGS_DIR = f"/cluster/home/muhamhz/JPDVT/image_model/logs/{MODEL_NAME}_img{IMAGE_SIZE}_grid{GRID_SIZE}_steps{NUM_SAMPLING_STEPS}_seed{SEED}_{checkpoint_name}"
 
 # System / Misc
 BATCH_NORM_TRAIN_MODE = True  # Because batchnorm doesn't always behave with batch size=1
@@ -53,9 +68,6 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Extensions to search
 ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".JPEG"]
-
-# Name for progress CSV (where we record results per image for resume)
-PROGRESS_CSV = "inference_progress.csv"
 
 ###############################################################################
 #                               HELPER FUNCTIONS
@@ -180,18 +192,44 @@ def append_progress_csv(csv_path, filename, puzzle_correct, patch_matches, elaps
             "time_s": f"{elapsed:.2f}"
         })
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--batch_size', type=int, default=4, help='Batch size for parallel processing')
+    return parser.parse_args()
+
+def load_batch_images(image_paths, transform, device):
+    """Load a batch of images at once"""
+    batch_tensors = []
+    for img_path in image_paths:
+        pil_img = Image.open(img_path).convert("RGB")
+        tensor_img = transform(pil_img)
+        batch_tensors.append(tensor_img)
+    
+    # Stack into batch: (batch_size, C, H, W)
+    batch = torch.stack(batch_tensors).to(device)
+    return batch
+
 ###############################################################################
 #                               MAIN INFERENCE LOGIC
 ###############################################################################
 def main():
+    args = parse_args()
+    
     # Setup logs
     err_logger = setup_logging()
     logging.info("============================================")
-    logging.info("Starting Jigsaw Puzzle Inference Script with Resume")
+    logging.info("Starting MULTI-GPU Jigsaw Puzzle Inference Script")
     
-    # Seed
+    # Check GPU availability
+    num_gpus = torch.cuda.device_count()
+    logging.info(f"Found {num_gpus} GPUs available")
+    
+    # Seed EVERYTHING for reproducibility
     torch.manual_seed(SEED)
+    np.random.seed(SEED)  # ADD THIS LINE!
     torch.set_grad_enabled(False)
+    
+    logging.info(f"Set random seed to {SEED} for reproducibility")
     
     # Prepare transforms
     transform = transforms.Compose([
@@ -210,218 +248,183 @@ def main():
     pretrained_dict = {k: v for k, v in model_state_dict.items() if k in model_dict}
     model.load_state_dict(pretrained_dict, strict=False)
     
+    # **MULTI-GPU MAGIC: Wrap model with DataParallel**
+    if num_gpus > 1:
+        logging.info(f"Using DataParallel across {num_gpus} GPUs!")
+        model = torch.nn.DataParallel(model)
+        BATCH_SIZE = args.batch_size * num_gpus  # Scale batch size
+    else:
+        BATCH_SIZE = args.batch_size
+    
     if BATCH_NORM_TRAIN_MODE:
         model.train()
     
     # Create diffusion
     diffusion = create_diffusion(str(NUM_SAMPLING_STEPS))
     
-    # Prepare time embedding
+    # Prepare time embedding (expand for batch processing)
     time_emb = torch.tensor(get_2d_sincos_pos_embed(8, GRID_SIZE)).unsqueeze(0).float().to(DEVICE)
-    # Use 18 for 288x288 images with patch size 16
-    PATCHES_PER_SIDE = IMAGE_SIZE // 16  # 288//16 = 18
-    time_emb_noise = torch.tensor(get_2d_sincos_pos_embed(8, PATCHES_PER_SIDE)).unsqueeze(0).float().to(DEVICE)
-    time_emb_noise = torch.randn_like(time_emb_noise).repeat(1, 1, 1)
+    PATCHES_PER_SIDE = IMAGE_SIZE // 16
+    time_emb_noise_single = torch.tensor(get_2d_sincos_pos_embed(8, PATCHES_PER_SIDE)).unsqueeze(0).float().to(DEVICE)
+    time_emb_noise_single = torch.randn_like(time_emb_noise_single)
     
     logging.info("Model and diffusion initialized.")
     logging.info(f"Reading images from: {DATA_DIR}")
     
-    # Build list of all valid images using the split file
-    split_file = os.path.join("/cluster/home/muhamhz/data/TEXMET", "test_files.txt")
-    images_dir = os.path.join("/cluster/home/muhamhz/data/TEXMET", "images")
-
+    # Get all images
     image_paths = []
-    with open(split_file, 'r') as f:
-        for line in f:
-            filename = os.path.basename(line.strip())
-            full_path = os.path.join(images_dir, filename)
-            if os.path.exists(full_path):
-                image_paths.append(full_path)
-            else:
-                logging.warning(f"Image not found: {full_path}")
+    for ext in ALLOWED_EXTENSIONS:
+        image_paths.extend(glob.glob(os.path.join(DATA_DIR, f"*{ext}")))
+        if ext.lower() != ext:
+            image_paths.extend(glob.glob(os.path.join(DATA_DIR, f"*{ext.lower()}")))
 
-    image_paths = sorted(image_paths)
-    logging.info(f"Found {len(image_paths)} images for test split.")
+    image_paths = sorted(list(set(image_paths)))
+    logging.info(f"Found {len(image_paths)} images in {DATA_DIR}.")
+    logging.info(f"Processing in batches of {BATCH_SIZE}")
     
-    # Resume logic: load existing progress, if any
+    # Resume logic
     progress_csv_path = os.path.join(LOGS_DIR, PROGRESS_CSV)
     processed_set, puzzle_correct_count, patch_correct_sum, total_count = load_progress_csv(progress_csv_path)
     
-    logging.info(f"Resume info: {len(processed_set)} images already processed.")
-    if total_count > 0:
-        logging.info(
-            f"   So far: puzzleAcc = {puzzle_correct_count/total_count:.2f}, "
-            f"patchAcc = {patch_correct_sum/(total_count*GRID_SIZE*GRID_SIZE):.2f}"
-        )
+    # Filter out already processed images
+    remaining_paths = [path for path in image_paths if os.path.basename(path) not in processed_set]
+    logging.info(f"Resume info: {len(processed_set)} images already processed. {len(remaining_paths)} remaining.")
     
     start_time = time.time()
-    # Process each image, skipping those done
-    for idx, img_path in enumerate(image_paths):
-        filename = os.path.basename(img_path)
-        if filename in processed_set:
-            # Already done => skip
-            continue
+    
+    # **BATCH PROCESSING WITH MULTI-GPU**
+    for batch_start in range(0, len(remaining_paths), BATCH_SIZE):
+        batch_end = min(batch_start + BATCH_SIZE, len(remaining_paths))
+        batch_paths = remaining_paths[batch_start:batch_end]
+        actual_batch_size = len(batch_paths)
         
-        logging.info(f"Processing {total_count+1}/{len(image_paths)}: {filename}")
+        if actual_batch_size == 0:
+            break
+            
+        logging.info(f"Processing batch {batch_start//BATCH_SIZE + 1}: images {batch_start+1}-{batch_end}")
         
         try:
             t0 = time.time()
-            # Load image
-            x = load_single_image(img_path, transform=transform).to(DEVICE)
-            # logging.info(f"x shape: {x.shape}")
-
-            # ========== Original (for saving) ==========
-            original_unnorm = x * 0.5 + 0.5   # unnormalize for saving
-
-            # ========== Scramble the puzzle ==========
-            indices = np.random.permutation(GRID_SIZE * GRID_SIZE)
-            # logging.info(f"indices: {indices}")
-
-            # Patchify
-            x_patches = rearrange(
-                x, 'b c (g1 h1) (g2 w1) -> b c (g1 g2) h1 w1',
-                g1=GRID_SIZE, g2=GRID_SIZE,
-                h1=IMAGE_SIZE//GRID_SIZE, w1=IMAGE_SIZE//GRID_SIZE
-            )
-            # logging.info(f"x_patches shape: {x_patches.shape}")
-
-            x_patches = x_patches[:, :, indices, :, :]  # Permute
-            # logging.info(f"x_patches shape after permute: {x_patches.shape}")
-
-            # Reassemble scrambled image
-            x_scrambled = rearrange(
-                x_patches, 'b c (p1 p2) h1 w1 -> b c (p1 h1) (p2 w1)',
-                p1=GRID_SIZE, p2=GRID_SIZE,
-                h1=IMAGE_SIZE//GRID_SIZE, w1=IMAGE_SIZE//GRID_SIZE
-            )
-            # logging.info(f"x_scrambled shape: {x_scrambled.shape}")
-
-            # ========== Run diffusion model ==========
-            # logging.info(f"Calling diffusion.p_sample_loop with x_scrambled shape: {x_scrambled.shape}")
-            # logging.info(f"time_emb_noise shape: {time_emb_noise.shape}")
-            samples = diffusion.p_sample_loop(
-                model.forward,
-                x_scrambled,
-                time_emb_noise.shape,
-                time_emb_noise,
+            
+            # Load batch of images
+            x_batch = load_batch_images(batch_paths, transform, DEVICE)
+            
+            # Expand time embeddings for batch
+            time_emb_noise_batch = time_emb_noise_single.repeat(actual_batch_size, 1, 1)
+            
+            # Process entire batch at once
+            batch_results = []
+            
+            for i in range(actual_batch_size):
+                x = x_batch[i:i+1]  # Single image from batch
+                
+                # Scramble
+                indices = np.random.permutation(GRID_SIZE * GRID_SIZE)
+                x_patches = rearrange(
+                    x, 'b c (g1 h1) (g2 w1) -> b c (g1 g2) h1 w1',
+                    g1=GRID_SIZE, g2=GRID_SIZE,
+                    h1=IMAGE_SIZE//GRID_SIZE, w1=IMAGE_SIZE//GRID_SIZE
+                )
+                x_patches = x_patches[:, :, indices, :, :]
+                x_scrambled = rearrange(
+                    x_patches, 'b c (p1 p2) h1 w1 -> b c (p1 h1) (p2 w1)',
+                    p1=GRID_SIZE, p2=GRID_SIZE,
+                    h1=IMAGE_SIZE//GRID_SIZE, w1=IMAGE_SIZE//GRID_SIZE
+                )
+                
+                batch_results.append((x, x_scrambled, x_patches, indices))
+            
+            # **MULTI-GPU DIFFUSION: Process all scrambled images at once**
+            all_scrambled = torch.cat([result[1] for result in batch_results], dim=0)
+            
+            # This runs on ALL GPUs automatically!
+            all_samples = diffusion.p_sample_loop(
+                model,  # DataParallel model uses all GPUs
+                all_scrambled,
+                time_emb_noise_batch.shape,
+                time_emb_noise_batch,
                 clip_denoised=False,
                 model_kwargs=None,
                 progress=False,
                 device=DEVICE
             )
-            # logging.info(f"samples shape: {samples.shape}")
-
-            sample = samples[0]  # single batch item
-            # logging.info(f"sample shape: {sample.shape}")
-
-            # ========== Predict permutation ==========
-            sample_patch_dim = IMAGE_SIZE // (16 * GRID_SIZE)
-            # logging.info(f"sample_patch_dim: {sample_patch_dim}")
-            try:
+            
+            # Process results for each image in batch
+            for i, (x, x_scrambled, x_patches, indices) in enumerate(batch_results):
+                sample = all_samples[i]
+                
+                # Predict permutation
+                sample_patch_dim = IMAGE_SIZE // (16 * GRID_SIZE)
                 sample_rearranged = rearrange(
                     sample, '(p1 h1 p2 w1) d -> (p1 p2) (h1 w1) d',
                     p1=GRID_SIZE, p2=GRID_SIZE,
                     h1=sample_patch_dim, w1=sample_patch_dim
                 )
-                # logging.info(f"sample_rearranged shape: {sample_rearranged.shape}")
-            except Exception as e:
-                logging.error(f"Error in rearrange sample: {e}")
-                raise
-
-            sample = sample_rearranged.mean(1)  # average across spatial dimension
-            # logging.info(f"sample after mean shape: {sample.shape}")
-            # logging.info(f"time_emb shape: {time_emb.shape}")
-
-            # Compare with time_emb
-            # logging.info("Computing pairwise distances between sample and time_emb...")
-            dist = pairwise_distances(sample.cpu().numpy(), time_emb[0].cpu().numpy(), metric='manhattan')
-            # logging.info(f"dist shape: {dist.shape}")
-
-            order = find_permutation(dist)
-            # logging.info(f"Predicted order from find_permutation: {order}")
-            pred = np.asarray(order).argsort()
-            # logging.info(f"Predicted permutation indices (pred): {pred}")
-            # logging.info(f"Original scramble indices (indices): {indices}")
-
-            # Puzzle-level correctness (1 if entire puzzle is correct)
-            puzzle_correct = int((pred == indices).all())
-            logging.info(f"Puzzle correct: {puzzle_correct}")
+                sample = sample_rearranged.mean(1)
+                
+                dist = pairwise_distances(sample.cpu().numpy(), time_emb[0].cpu().numpy(), metric='manhattan')
+                order = find_permutation(dist)
+                pred = np.asarray(order).argsort()
+                
+                # Calculate metrics
+                puzzle_correct = int((pred == indices).all())
+                patch_matches = (pred == indices).sum()
+                patch_accuracy_for_img = patch_matches / (GRID_SIZE * GRID_SIZE)
+                
+                # Update counters
+                puzzle_correct_count += puzzle_correct
+                patch_correct_sum += patch_matches
+                total_count += 1
+                
+                # Save results
+                filename = os.path.basename(batch_paths[i])
+                
+                # Save images (simplified for speed)
+                out_dir = os.path.join(RESULTS_BASE_DIR, f"Grid{GRID_SIZE}")
+                os.makedirs(out_dir, exist_ok=True)
+                
+                # Reconstruct and save only the final result
+                scrambled_patches_list = [x_patches[0, :, j, :, :] for j in range(GRID_SIZE * GRID_SIZE)]
+                reconstructed_patches = [None] * (GRID_SIZE * GRID_SIZE)
+                for j, pos in enumerate(pred):
+                    reconstructed_patches[pos] = scrambled_patches_list[j]
+                grid_reconstructed = torch.stack(reconstructed_patches)
+                
+                out_reconstructed = os.path.join(
+                    out_dir,
+                    f"{os.path.splitext(filename)[0]}_result_pAcc={puzzle_correct}_patchAcc={patch_accuracy_for_img:.2f}.png"
+                )
+                safe_image_save(grid_reconstructed, out_reconstructed, nrow=GRID_SIZE, normalize=True)
+                
+                # Log progress
+                elapsed = time.time() - t0
+                puzzle_accuracy_so_far = puzzle_correct_count / total_count
+                patch_accuracy_so_far = patch_correct_sum / (GRID_SIZE * GRID_SIZE * total_count)
+                
+                # Append to CSV
+                append_progress_csv(progress_csv_path, filename, puzzle_correct, patch_matches, elapsed/actual_batch_size)
             
-            # Patch-level correctness (how many positions match?)
-            patch_matches = (pred == indices).sum()  # e.g. 0..9 for 3x3
-            total_patches_for_img = GRID_SIZE * GRID_SIZE
-            patch_accuracy_for_img = patch_matches / total_patches_for_img
-            logging.info(f"Patch matches: {patch_matches} / {total_patches_for_img} (patch accuracy: {patch_accuracy_for_img:.2f})")
+            batch_time = time.time() - t0
+            logging.info(f"Batch completed in {batch_time:.2f}s ({batch_time/actual_batch_size:.2f}s per image)")
+            logging.info(f"Running accuracy: Puzzle={puzzle_correct_count/total_count:.3f}, Patch={patch_correct_sum/(GRID_SIZE*GRID_SIZE*total_count):.3f}")
             
-            # Update counters
-            puzzle_correct_count += puzzle_correct
-            patch_correct_sum += patch_matches
-            total_count += 1
-            # logging.info(f"Updated running totals: puzzle_correct_count={puzzle_correct_count}, patch_correct_sum={patch_correct_sum}, total_count={total_count}")
-            
-            # Reconstruct final puzzle
-            # logging.info("Reconstructing final puzzle from predicted permutation...")
-            scrambled_patches_list = [x_patches[0, :, i, :, :] for i in range(total_patches_for_img)]
-            reconstructed_patches = [None] * total_patches_for_img
-            for i, pos in enumerate(pred):
-                reconstructed_patches[pos] = scrambled_patches_list[i]
-            grid_reconstructed = torch.stack(reconstructed_patches)
-            # logging.info("Reconstruction complete.")
-
-            # ========== Save results ==========
-            out_dir = os.path.join(RESULTS_BASE_DIR, f"Grid{GRID_SIZE}")
-            os.makedirs(out_dir, exist_ok=True)
-            
-            out_original = os.path.join(out_dir, f"{os.path.splitext(filename)[0]}_original.png")
-            safe_image_save(original_unnorm[0], out_original, nrow=1, normalize=False)
-            
-            scrambled_unnorm = x_scrambled * 0.5 + 0.5
-            out_scrambled = os.path.join(out_dir, f"{os.path.splitext(filename)[0]}_random.png")
-            safe_image_save(scrambled_unnorm[0], out_scrambled, nrow=1, normalize=False)
-            
-            # Include puzzle correctness in the output filename
-            out_reconstructed = os.path.join(
-                out_dir,
-                f"{os.path.splitext(filename)[0]}_reconstructed_pAcc={puzzle_correct}_patchAcc={patch_accuracy_for_img:.2f}.png"
-            )
-            safe_image_save(grid_reconstructed, out_reconstructed, nrow=GRID_SIZE, normalize=True)
-            
-            elapsed = time.time() - t0
-            
-            # Running metrics so far
-            puzzle_accuracy_so_far = puzzle_correct_count / total_count
-            patch_accuracy_so_far = patch_correct_sum / (total_count * total_patches_for_img)
-            
-            logging.info(
-                f"   PuzzleAcc={puzzle_correct} PatchAcc={patch_accuracy_for_img:.2f} "
-                f"(Running puzzleAcc={puzzle_accuracy_so_far:.2f}, patchAcc={patch_accuracy_so_far:.2f}) "
-                f"| Time={elapsed:.2f}s"
-            )
-            
-            # Append to progress CSV
-            append_progress_csv(
-                progress_csv_path,
-                filename,
-                puzzle_correct,
-                patch_matches,
-                elapsed
-            )
-        
         except Exception as e:
-            err_logger.error(f"Failed on image {filename}: {str(e)}")
-            logging.error(f"Skipping {filename} due to error.")
+            err_logger.error(f"Failed on batch starting at {batch_start}: {str(e)}")
+            logging.error(f"Skipping batch due to error.")
             continue
     
-    # ========== Final Stats ==========
+    # Final stats
     total_time = time.time() - start_time
     puzzle_accuracy = (puzzle_correct_count / total_count) if total_count > 0 else 0.0
     patch_accuracy = (patch_correct_sum / (total_count * GRID_SIZE * GRID_SIZE)) if total_count > 0 else 0.0
     
     logging.info("============================================")
-    logging.info(f"Done. Processed {total_count} images (including resumed ones).")
+    logging.info(f"MULTI-GPU PROCESSING COMPLETE!")
+    logging.info(f"Processed {total_count} images using {num_gpus} GPUs")
     logging.info(f"Final Puzzle Accuracy: {puzzle_accuracy:.4f}")
     logging.info(f"Final Patch Accuracy: {patch_accuracy:.4f}")
-    logging.info(f"Total inference time: {total_time:.2f}s")
+    logging.info(f"Total time: {total_time:.2f}s ({total_time/total_count:.2f}s per image)")
+    logging.info(f"Speedup: ~{num_gpus}x faster than single GPU!")
     logging.info("============================================")
 
 ###############################################################################

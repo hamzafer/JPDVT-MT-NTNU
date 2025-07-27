@@ -297,7 +297,7 @@ def main(args):
     if args.dataset == "met":
         dataset = MET(args.data_path, 'train')
     elif args.dataset == "texmet":
-        dataset = TEXMET(args.data_path, 'train')
+        dataset = TEXMET(args.data_path, 'train', image_size=args.image_size)  # ADD image_size parameter
     elif args.dataset == "imagenet":
         dataset = ImageFolder(args.data_path, transform=transform)
 
@@ -516,7 +516,7 @@ def validate_model(model, diffusion, data_path, device, logger, args, num_sample
     if args.dataset == "met":
         val_dataset = MET(data_path, 'val')  # Changed to 'val'
     elif args.dataset == "texmet":
-        val_dataset = TEXMET(data_path, 'val')  # Changed to 'val'
+        val_dataset = TEXMET(data_path, 'val', image_size=args.image_size)  # ADD image_size parameter
     elif args.dataset == "imagenet":
         # For ImageNet, use a validation transform without augmentation
         transform = transforms.Compose([

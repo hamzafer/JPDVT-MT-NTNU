@@ -1,0 +1,3 @@
+2025-07-12 20:15:42,143 [INFO] ============================================
+2025-07-12 20:15:42,144 [INFO] Starting Jigsaw Puzzle Inference Script with Resume
+2025-07-12 20:15:42,147 [INFO] Loading model [JPDVT] from checkpoint: /cluster/home/muhamhz/JPDVT/image_model/models/3x3_Full/2850000.pt

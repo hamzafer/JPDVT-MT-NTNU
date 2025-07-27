@@ -1,0 +1,134 @@
+2025-07-14 02:05:21,802 [INFO] ============================================
+2025-07-14 02:05:21,802 [INFO] Starting MULTI-GPU Jigsaw Puzzle Inference Script
+2025-07-14 02:05:21,865 [INFO] Found 4 GPUs available
+2025-07-14 02:05:21,869 [INFO] Set random seed to 42 for reproducibility
+2025-07-14 02:05:21,869 [INFO] Loading model [JPDVT] from checkpoint: /cluster/home/muhamhz/JPDVT/image_model/models/3x3_Full/2850000.pt
+2025-07-14 02:05:24,271 [INFO] Using DataParallel across 4 GPUs!
+2025-07-14 02:05:24,274 [INFO] Model and diffusion initialized.
+2025-07-14 02:05:24,274 [INFO] Reading images from: /cluster/home/muhamhz/data/inpainting/exp2_regular_masking/masked
+2025-07-14 02:05:24,278 [INFO] Found 1000 images in /cluster/home/muhamhz/data/inpainting/exp2_regular_masking/masked.
+2025-07-14 02:05:24,278 [INFO] Processing in batches of 64
+2025-07-14 02:05:24,279 [INFO] Resume info: 0 images already processed. 1000 remaining.
+2025-07-14 02:05:24,279 [INFO] Processing batch 1: images 1-64
+2025-07-14 02:05:48,397 [INFO] Batch completed in 24.12s (0.38s per image)
+2025-07-14 02:05:48,397 [INFO] Running accuracy: Puzzle=0.922, Patch=0.972
+2025-07-14 02:05:48,397 [INFO] Processing batch 2: images 65-128
+2025-07-14 02:06:01,566 [INFO] Batch completed in 13.17s (0.21s per image)
+2025-07-14 02:06:01,566 [INFO] Running accuracy: Puzzle=0.922, Patch=0.959
+2025-07-14 02:06:01,566 [INFO] Processing batch 3: images 129-192
+2025-07-14 02:06:14,690 [INFO] Batch completed in 13.12s (0.21s per image)
+2025-07-14 02:06:14,690 [INFO] Running accuracy: Puzzle=0.917, Patch=0.958
+2025-07-14 02:06:14,690 [INFO] Processing batch 4: images 193-256
+2025-07-14 02:06:27,914 [INFO] Batch completed in 13.22s (0.21s per image)
+2025-07-14 02:06:27,914 [INFO] Running accuracy: Puzzle=0.906, Patch=0.947
+2025-07-14 02:06:27,914 [INFO] Processing batch 5: images 257-320
+2025-07-14 02:06:40,987 [INFO] Batch completed in 13.07s (0.20s per image)
+2025-07-14 02:06:40,987 [INFO] Running accuracy: Puzzle=0.891, Patch=0.942
+2025-07-14 02:06:40,987 [INFO] Processing batch 6: images 321-384
+2025-07-14 02:06:54,154 [INFO] Batch completed in 13.17s (0.21s per image)
+2025-07-14 02:06:54,154 [INFO] Running accuracy: Puzzle=0.885, Patch=0.933
+2025-07-14 02:06:54,154 [INFO] Processing batch 7: images 385-448
+2025-07-14 02:07:07,359 [INFO] Batch completed in 13.20s (0.21s per image)
+2025-07-14 02:07:07,359 [INFO] Running accuracy: Puzzle=0.884, Patch=0.931
+2025-07-14 02:07:07,359 [INFO] Processing batch 8: images 449-512
+2025-07-14 02:07:20,499 [INFO] Batch completed in 13.14s (0.21s per image)
+2025-07-14 02:07:20,500 [INFO] Running accuracy: Puzzle=0.871, Patch=0.924
+2025-07-14 02:07:20,500 [INFO] Processing batch 9: images 513-576
+2025-07-14 02:07:33,636 [INFO] Batch completed in 13.14s (0.21s per image)
+2025-07-14 02:07:33,637 [INFO] Running accuracy: Puzzle=0.875, Patch=0.925
+2025-07-14 02:07:33,637 [INFO] Processing batch 10: images 577-640
+2025-07-14 02:07:46,768 [INFO] Batch completed in 13.13s (0.21s per image)
+2025-07-14 02:07:46,768 [INFO] Running accuracy: Puzzle=0.866, Patch=0.918
+2025-07-14 02:07:46,768 [INFO] Processing batch 11: images 641-704
+2025-07-14 02:07:59,869 [INFO] Batch completed in 13.10s (0.20s per image)
+2025-07-14 02:07:59,869 [INFO] Running accuracy: Puzzle=0.862, Patch=0.918
+2025-07-14 02:07:59,869 [INFO] Processing batch 12: images 705-768
+2025-07-14 02:08:13,224 [INFO] Batch completed in 13.36s (0.21s per image)
+2025-07-14 02:08:13,225 [INFO] Running accuracy: Puzzle=0.868, Patch=0.923
+2025-07-14 02:08:13,225 [INFO] Processing batch 13: images 769-832
+2025-07-14 02:08:26,319 [INFO] Batch completed in 13.09s (0.20s per image)
+2025-07-14 02:08:26,319 [INFO] Running accuracy: Puzzle=0.877, Patch=0.928
+2025-07-14 02:08:26,319 [INFO] Processing batch 14: images 833-896
+2025-07-14 02:08:39,437 [INFO] Batch completed in 13.12s (0.20s per image)
+2025-07-14 02:08:39,438 [INFO] Running accuracy: Puzzle=0.874, Patch=0.926
+2025-07-14 02:08:39,438 [INFO] Processing batch 15: images 897-960
+2025-07-14 02:08:52,702 [INFO] Batch completed in 13.26s (0.21s per image)
+2025-07-14 02:08:52,702 [INFO] Running accuracy: Puzzle=0.872, Patch=0.926
+2025-07-14 02:08:52,702 [INFO] Processing batch 16: images 961-1000
+2025-07-14 02:09:05,372 [INFO] Batch completed in 12.67s (0.32s per image)
+2025-07-14 02:09:05,372 [INFO] Running accuracy: Puzzle=0.873, Patch=0.927
+2025-07-14 02:09:05,372 [INFO] ============================================
+2025-07-14 02:09:05,372 [INFO] MULTI-GPU PROCESSING COMPLETE!
+2025-07-14 02:09:05,372 [INFO] Processed 1000 images using 4 GPUs
+2025-07-14 02:09:05,372 [INFO] Final Puzzle Accuracy: 0.8730
+2025-07-14 02:09:05,373 [INFO] Final Patch Accuracy: 0.9267
+2025-07-14 02:09:05,373 [INFO] Total time: 221.09s (0.22s per image)
+2025-07-14 02:09:05,373 [INFO] Speedup: ~4x faster than single GPU!
+2025-07-14 02:09:05,373 [INFO] ============================================
+2025-07-14 02:09:54,870 [INFO] ============================================
+2025-07-14 02:09:54,870 [INFO] Starting MULTI-GPU Jigsaw Puzzle Inference Script
+2025-07-14 02:09:54,938 [INFO] Found 4 GPUs available
+2025-07-14 02:09:54,942 [INFO] Set random seed to 42 for reproducibility
+2025-07-14 02:09:54,942 [INFO] Loading model [JPDVT] from checkpoint: /cluster/home/muhamhz/JPDVT/image_model/models/3x3_Full/2850000.pt
+2025-07-14 02:09:57,346 [INFO] Using DataParallel across 4 GPUs!
+2025-07-14 02:09:57,349 [INFO] Model and diffusion initialized.
+2025-07-14 02:09:57,350 [INFO] Reading images from: /cluster/home/muhamhz/data/inpainting/exp2_regular_masking/results/imgs
+2025-07-14 02:09:57,354 [INFO] Found 1000 images in /cluster/home/muhamhz/data/inpainting/exp2_regular_masking/results/imgs.
+2025-07-14 02:09:57,354 [INFO] Processing in batches of 64
+2025-07-14 02:09:57,354 [INFO] Resume info: 0 images already processed. 1000 remaining.
+2025-07-14 02:09:57,354 [INFO] Processing batch 1: images 1-64
+2025-07-14 02:10:21,161 [INFO] Batch completed in 23.81s (0.37s per image)
+2025-07-14 02:10:21,161 [INFO] Running accuracy: Puzzle=0.703, Patch=0.818
+2025-07-14 02:10:21,161 [INFO] Processing batch 2: images 65-128
+2025-07-14 02:10:34,710 [INFO] Batch completed in 13.55s (0.21s per image)
+2025-07-14 02:10:34,710 [INFO] Running accuracy: Puzzle=0.766, Patch=0.859
+2025-07-14 02:10:34,710 [INFO] Processing batch 3: images 129-192
+2025-07-14 02:10:48,317 [INFO] Batch completed in 13.61s (0.21s per image)
+2025-07-14 02:10:48,317 [INFO] Running accuracy: Puzzle=0.776, Patch=0.862
+2025-07-14 02:10:48,317 [INFO] Processing batch 4: images 193-256
+2025-07-14 02:11:01,878 [INFO] Batch completed in 13.56s (0.21s per image)
+2025-07-14 02:11:01,878 [INFO] Running accuracy: Puzzle=0.773, Patch=0.860
+2025-07-14 02:11:01,878 [INFO] Processing batch 5: images 257-320
+2025-07-14 02:11:15,395 [INFO] Batch completed in 13.52s (0.21s per image)
+2025-07-14 02:11:15,395 [INFO] Running accuracy: Puzzle=0.778, Patch=0.866
+2025-07-14 02:11:15,395 [INFO] Processing batch 6: images 321-384
+2025-07-14 02:11:29,065 [INFO] Batch completed in 13.67s (0.21s per image)
+2025-07-14 02:11:29,065 [INFO] Running accuracy: Puzzle=0.776, Patch=0.860
+2025-07-14 02:11:29,065 [INFO] Processing batch 7: images 385-448
+2025-07-14 02:11:42,629 [INFO] Batch completed in 13.56s (0.21s per image)
+2025-07-14 02:11:42,629 [INFO] Running accuracy: Puzzle=0.781, Patch=0.859
+2025-07-14 02:11:42,629 [INFO] Processing batch 8: images 449-512
+2025-07-14 02:11:56,235 [INFO] Batch completed in 13.61s (0.21s per image)
+2025-07-14 02:11:56,235 [INFO] Running accuracy: Puzzle=0.775, Patch=0.857
+2025-07-14 02:11:56,235 [INFO] Processing batch 9: images 513-576
+2025-07-14 02:12:09,882 [INFO] Batch completed in 13.65s (0.21s per image)
+2025-07-14 02:12:09,882 [INFO] Running accuracy: Puzzle=0.774, Patch=0.855
+2025-07-14 02:12:09,882 [INFO] Processing batch 10: images 577-640
+2025-07-14 02:12:23,434 [INFO] Batch completed in 13.55s (0.21s per image)
+2025-07-14 02:12:23,434 [INFO] Running accuracy: Puzzle=0.775, Patch=0.856
+2025-07-14 02:12:23,434 [INFO] Processing batch 11: images 641-704
+2025-07-14 02:12:37,024 [INFO] Batch completed in 13.59s (0.21s per image)
+2025-07-14 02:12:37,024 [INFO] Running accuracy: Puzzle=0.777, Patch=0.856
+2025-07-14 02:12:37,024 [INFO] Processing batch 12: images 705-768
+2025-07-14 02:12:50,585 [INFO] Batch completed in 13.56s (0.21s per image)
+2025-07-14 02:12:50,585 [INFO] Running accuracy: Puzzle=0.779, Patch=0.858
+2025-07-14 02:12:50,585 [INFO] Processing batch 13: images 769-832
+2025-07-14 02:13:04,202 [INFO] Batch completed in 13.62s (0.21s per image)
+2025-07-14 02:13:04,202 [INFO] Running accuracy: Puzzle=0.787, Patch=0.865
+2025-07-14 02:13:04,203 [INFO] Processing batch 14: images 833-896
+2025-07-14 02:13:17,737 [INFO] Batch completed in 13.53s (0.21s per image)
+2025-07-14 02:13:17,737 [INFO] Running accuracy: Puzzle=0.779, Patch=0.858
+2025-07-14 02:13:17,737 [INFO] Processing batch 15: images 897-960
+2025-07-14 02:13:31,348 [INFO] Batch completed in 13.61s (0.21s per image)
+2025-07-14 02:13:31,348 [INFO] Running accuracy: Puzzle=0.774, Patch=0.856
+2025-07-14 02:13:31,348 [INFO] Processing batch 16: images 961-1000
+2025-07-14 02:13:44,239 [INFO] Batch completed in 12.89s (0.32s per image)
+2025-07-14 02:13:44,239 [INFO] Running accuracy: Puzzle=0.773, Patch=0.856
+2025-07-14 02:13:44,239 [INFO] ============================================
+2025-07-14 02:13:44,239 [INFO] MULTI-GPU PROCESSING COMPLETE!
+2025-07-14 02:13:44,239 [INFO] Processed 1000 images using 4 GPUs
+2025-07-14 02:13:44,239 [INFO] Final Puzzle Accuracy: 0.7730
+2025-07-14 02:13:44,239 [INFO] Final Patch Accuracy: 0.8559
+2025-07-14 02:13:44,239 [INFO] Total time: 226.88s (0.23s per image)
+2025-07-14 02:13:44,239 [INFO] Speedup: ~4x faster than single GPU!
+2025-07-14 02:13:44,239 [INFO] ============================================

@@ -8,3 +8,4 @@ image_model/wandb/
 wandb/
 *.wandb
 t_t.png
+image_model/results_finetune/003-texmet-JPDVT-crop
